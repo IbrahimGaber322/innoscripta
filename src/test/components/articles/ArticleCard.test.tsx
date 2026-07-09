@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
-import type { Article } from '@/domain/article'
 import { ArticleCard } from '@/components/articles/ArticleCard'
+import type { Article } from '@/domain/article'
 
 const article: Article = {
   id: 'guardian:test-article',
@@ -16,9 +17,17 @@ const article: Article = {
   publishedAt: '2026-07-03T12:00:00Z',
 }
 
+function renderCard(entry: Article) {
+  render(
+    <MemoryRouter>
+      <ArticleCard article={entry} />
+    </MemoryRouter>,
+  )
+}
+
 describe('ArticleCard', () => {
   it('shows the source, category, byline, and date', () => {
-    render(<ArticleCard article={article} />)
+    renderCard(article)
 
     expect(screen.getByText('The Guardian')).toBeInTheDocument()
     expect(screen.getByText('Technology')).toBeInTheDocument()
@@ -26,12 +35,11 @@ describe('ArticleCard', () => {
     expect(screen.getByText('Jul 3, 2026')).toBeInTheDocument()
   })
 
-  it('links the headline to the original article in a new tab', () => {
-    render(<ArticleCard article={article} />)
+  it('links the headline to the in-app reader page', () => {
+    renderCard(article)
 
     const link = screen.getByRole('link', { name: article.title })
-    expect(link).toHaveAttribute('href', article.url)
-    expect(link).toHaveAttribute('target', '_blank')
+    expect(link.getAttribute('href')).toMatch(/^\/article\//)
   })
 
   it('renders without optional fields', () => {
@@ -44,7 +52,7 @@ describe('ArticleCard', () => {
       publishedAt: '2026-07-01T00:00:00Z',
     }
 
-    render(<ArticleCard article={minimal} />)
+    renderCard(minimal)
 
     expect(screen.getByRole('link', { name: 'Minimal article' })).toBeInTheDocument()
     // No provider image: a branded placeholder keeps the grid aligned.
@@ -62,7 +70,7 @@ describe('ArticleCard', () => {
       publishedAt: '2026-07-01T00:00:00Z',
     }
 
-    render(<ArticleCard article={viaNewsApi} />)
+    renderCard(viaNewsApi)
 
     expect(screen.getByText('NewsAPI')).toBeInTheDocument()
     expect(screen.getByText('TechCrunch')).toBeInTheDocument()

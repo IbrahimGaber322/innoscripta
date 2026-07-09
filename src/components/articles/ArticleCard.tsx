@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import type { Article } from '../../domain/article'
+import { articlePath } from '../../lib/articleRoute'
 import { ArticleImage } from './ArticleImage'
 import { ArticleByline, ArticleKicker } from './ArticleMeta'
 
@@ -7,23 +9,26 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
+  const readerPath = articlePath(article)
+
   return (
     <article className="group flex h-full flex-col">
-      <ArticleImage article={article} />
+      <Link to={readerPath} state={{ article }} tabIndex={-1} aria-hidden="true">
+        <ArticleImage article={article} />
+      </Link>
 
       <div className="mt-4">
         <ArticleKicker article={article} />
       </div>
 
       <h3 className="mt-2 font-serif text-[21px] leading-tight font-medium">
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          to={readerPath}
+          state={{ article }}
           className="hover:text-accent transition-colors"
         >
           {article.title}
-        </a>
+        </Link>
       </h3>
 
       {article.description && (
