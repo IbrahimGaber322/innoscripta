@@ -44,6 +44,13 @@ describe('parseFilters', () => {
     expect(filters.fromDate).toBeUndefined()
     expect(filters.toDate).toBeUndefined()
   })
+
+  it('drops calendar-impossible dates that still match the format', () => {
+    const filters = parseFilters(new URLSearchParams('from=2026-02-30&to=2026-13-01'))
+
+    expect(filters.fromDate).toBeUndefined()
+    expect(filters.toDate).toBeUndefined()
+  })
 })
 
 describe('serializeFilters', () => {

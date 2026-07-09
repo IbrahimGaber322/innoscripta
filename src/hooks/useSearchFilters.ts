@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { isSourceId, type SourceId } from '../domain/article'
 import { isCategory, type Category } from '../domain/category'
+import { isValidISODate } from '../lib/formatDate'
 
 /** Search and filter state for the article list. */
 export interface SearchFilters {
@@ -16,8 +17,6 @@ export interface SearchFilters {
   toDate?: string
 }
 
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
-
 /** Parses URL params into validated filters; invalid values are dropped. */
 export function parseFilters(params: URLSearchParams): SearchFilters {
   const from = params.get('from') ?? ''
@@ -27,8 +26,8 @@ export function parseFilters(params: URLSearchParams): SearchFilters {
     keyword: params.get('q') ?? '',
     categories: (params.get('categories') ?? '').split(',').filter(isCategory),
     sourceIds: (params.get('sources') ?? '').split(',').filter(isSourceId),
-    fromDate: DATE_PATTERN.test(from) ? from : undefined,
-    toDate: DATE_PATTERN.test(to) ? to : undefined,
+    fromDate: isValidISODate(from) ? from : undefined,
+    toDate: isValidISODate(to) ? to : undefined,
   }
 }
 
