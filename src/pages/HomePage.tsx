@@ -6,6 +6,7 @@ import { EmptyState } from '../components/articles/EmptyState'
 import { FeedFooter } from '../components/articles/FeedFooter'
 import { LeadArticle } from '../components/articles/LeadArticle'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
+import { TopHeadlines } from '../components/articles/TopHeadlines'
 import { TopStories } from '../components/articles/TopStories'
 import { CategoryTabs } from '../components/search/CategoryTabs'
 import { FiltersPanel } from '../components/search/FiltersPanel'
@@ -13,6 +14,7 @@ import { SearchBar } from '../components/search/SearchBar'
 import { useArticleSearch } from '../hooks/useArticleSearch'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { useSearchFilters } from '../hooks/useSearchFilters'
+import { useTopHeadlines } from '../hooks/useTopHeadlines'
 import { buildCategorySections } from '../lib/categorySections'
 import { formatToday } from '../lib/formatDate'
 
@@ -48,6 +50,9 @@ export function HomePage() {
     sections.flatMap((section) => section.articles.map((article) => article.id)),
   )
   const earlier = pool.filter((article) => !sectionedIds.has(article.id))
+
+  // The dark "Top headlines" box only appears on the browse front page.
+  const topHeadlines = useTopHeadlines(showPackage).data ?? []
 
   return (
     <section>
@@ -102,6 +107,7 @@ export function HomePage() {
                   articles={section.articles}
                 />
               ))}
+              <TopHeadlines articles={topHeadlines} />
               {earlier.length > 0 && (
                 <section className="mt-14">
                   <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
