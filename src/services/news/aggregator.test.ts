@@ -23,6 +23,7 @@ function makeSource(
   options: {
     configured?: boolean
     categories?: NewsSource['capabilities']['categories']
+    dateFilterWithCategory?: boolean
   } = {},
 ): NewsSource {
   return {
@@ -31,7 +32,7 @@ function makeSource(
     capabilities: {
       categories: options.categories ?? ['general', 'technology'],
       dateFilter: true,
-      dateFilterWithCategory: true,
+      dateFilterWithCategory: options.dateFilterWithCategory ?? true,
     },
     isConfigured: () => options.configured ?? true,
     fetchArticles: () =>
@@ -98,6 +99,23 @@ describe('fetchAggregated', () => {
     ])
 
     expect(result.articles.map((a) => a.id)).toEqual(['political'])
+    expect(result.errors).toEqual([])
+  })
+
+  it('skips sources that cannot combine date and category filters', async () => {
+    const article = makeArticle({ id: 'dated' })
+
+    const result = await fetchAggregated(
+      { ...QUERY, category: 'technology', fromDate: '2026-07-01' },
+      [
+        makeSource('newsapi', new Error('should never be called'), {
+          dateFilterWithCategory: false,
+        }),
+        makeSource('guardian', page([article])),
+      ],
+    )
+
+    expect(result.articles.map((a) => a.id)).toEqual(['dated'])
     expect(result.errors).toEqual([])
   })
 

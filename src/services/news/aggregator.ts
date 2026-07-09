@@ -80,6 +80,13 @@ export async function fetchAggregated(
     ) {
       // The source cannot filter by this category; skip it rather than
       // returning results that ignore the user's filter.
+    } else if (
+      query.category &&
+      (query.fromDate || query.toDate) &&
+      !source.capabilities.dateFilterWithCategory
+    ) {
+      // The source cannot combine date and category filters; skip it
+      // rather than silently dropping the date constraint.
     } else {
       eligible.push(source)
     }
