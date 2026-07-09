@@ -63,14 +63,10 @@ export function ArticlePage() {
 
   if (!article) {
     if (canFetchFull && fullQuery.isPending) {
-      return (
-        <div className="mx-auto max-w-180">
-          <BodySkeleton />
-        </div>
-      )
+      return <BodySkeleton />
     }
     return (
-      <div className="mx-auto max-w-180">
+      <div>
         <EmptyState
           title="Article unavailable"
           message="This article is no longer available in this session. Head back to the headlines to keep reading."
@@ -96,7 +92,7 @@ export function ArticlePage() {
       : undefined
 
   return (
-    <article className="mx-auto max-w-180">
+    <article>
       <button
         type="button"
         onClick={() => (window.history.state?.idx ? navigate(-1) : navigate('/'))}
