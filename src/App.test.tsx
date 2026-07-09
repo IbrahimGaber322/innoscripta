@@ -3,13 +3,16 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
 import App from './App'
+import { PreferencesProvider } from './components/preferences/PreferencesProvider'
 
 function renderApp(initialPath = '/') {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter initialEntries={[initialPath]}>
-        <App />
-      </MemoryRouter>
+      <PreferencesProvider>
+        <MemoryRouter initialEntries={[initialPath]}>
+          <App />
+        </MemoryRouter>
+      </PreferencesProvider>
     </QueryClientProvider>,
   )
 }

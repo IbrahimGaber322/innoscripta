@@ -3,15 +3,18 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
+import { PreferencesProvider } from './components/preferences/PreferencesProvider'
 import './index.css'
 import { queryClient } from './lib/queryClient'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <PreferencesProvider>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </PreferencesProvider>
     </QueryClientProvider>
   </StrictMode>,
 )
