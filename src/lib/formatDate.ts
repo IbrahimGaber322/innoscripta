@@ -21,3 +21,11 @@ const fullFormatter = new Intl.DateTimeFormat('en', {
 export function formatToday(): string {
   return fullFormatter.format(new Date())
 }
+
+/** A time-of-day greeting for the personalized feed header. */
+export function greeting(now: Date = new Date()): string {
+  const hour = now.getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 18) return 'Good afternoon'
+  return 'Good evening'
+}

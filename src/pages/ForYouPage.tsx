@@ -5,11 +5,14 @@ import { EmptyState } from '../components/articles/EmptyState'
 import { FeedFooter } from '../components/articles/FeedFooter'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
 import { TopPick } from '../components/articles/TopPick'
+import { PersonaChips } from '../components/preferences/PersonaChips'
 import { useForYouFeed } from '../hooks/useForYouFeed'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
-import { formatToday } from '../lib/formatDate'
+import { usePreferences } from '../hooks/usePreferences'
+import { formatToday, greeting } from '../lib/formatDate'
 
 export function ForYouPage() {
+  const { preferences } = usePreferences()
   const {
     isPending,
     followed,
@@ -33,19 +36,18 @@ export function ForYouPage() {
   return (
     <div>
       <div className="text-[13px] text-stone-500">{formatToday()}</div>
-      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-        <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
-          For you
-        </h1>
-        <div className="text-[13px] text-stone-500">
-          Curated from your sources &amp; topics —{' '}
-          <Link
-            to="/settings"
-            className="hover:text-accent underline underline-offset-3 transition-colors"
-          >
-            edit
-          </Link>
-        </div>
+      <h1 className="mt-2 font-serif text-4xl font-medium tracking-tight sm:text-5xl">
+        {greeting()}
+      </h1>
+      <div className="mt-3.5 flex flex-wrap items-center gap-2.5 text-[13.5px] text-stone-500">
+        <span>Your briefing, built from</span>
+        <PersonaChips preferences={preferences} />
+        <Link
+          to="/settings"
+          className="hover:text-ink underline underline-offset-3 transition-colors"
+        >
+          edit
+        </Link>
       </div>
 
       {isDefaultFeed && (
