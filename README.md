@@ -179,6 +179,8 @@ principle). Dependency inversion is the other pillar: consumers depend on the
   isolation),
 - preferences storage (round-trip, corruption fallback, invalid-entry
   filtering),
+- URL filter state (parsing, validation, round-trip serialization) and
+  followed-author matching,
 - key components (article card rendering, app routing).
 
 ## Known limitations

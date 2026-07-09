@@ -22,7 +22,7 @@ export interface ForYouFeed {
   isDefaultFeed: boolean
 }
 
-function matchesFollowedAuthor(article: Article, authors: string[]): boolean {
+export function matchesFollowedAuthor(article: Article, authors: string[]): boolean {
   if (!article.author) {
     return false
   }

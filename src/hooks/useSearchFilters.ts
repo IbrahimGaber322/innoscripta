@@ -17,7 +17,8 @@ export interface SearchFilters {
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
-function parseFilters(params: URLSearchParams): SearchFilters {
+/** Parses URL params into validated filters; invalid values are dropped. */
+export function parseFilters(params: URLSearchParams): SearchFilters {
   const category = params.get('category') ?? ''
   const from = params.get('from') ?? ''
   const to = params.get('to') ?? ''
@@ -31,7 +32,7 @@ function parseFilters(params: URLSearchParams): SearchFilters {
   }
 }
 
-function serializeFilters(filters: SearchFilters): URLSearchParams {
+export function serializeFilters(filters: SearchFilters): URLSearchParams {
   const params = new URLSearchParams()
   if (filters.keyword) params.set('q', filters.keyword)
   if (filters.category) params.set('category', filters.category)
