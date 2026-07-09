@@ -88,6 +88,13 @@ describe('buildNytRequestUrl', () => {
     expect(url.searchParams.get('end_date')).toBe('20260709')
   })
 
+  it('ranks by relevance for keyword searches and by recency otherwise', () => {
+    expect(
+      new URL(buildNytRequestUrl({ ...base, keyword: 'egypt' })).searchParams.get('sort'),
+    ).toBe('relevance')
+    expect(new URL(buildNytRequestUrl(base)).searchParams.get('sort')).toBe('newest')
+  })
+
   it('filters categories through a section.name fq query', () => {
     const url = new URL(buildNytRequestUrl({ ...base, category: 'world' }))
 

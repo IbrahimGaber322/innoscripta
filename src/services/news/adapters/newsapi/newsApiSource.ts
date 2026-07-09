@@ -47,7 +47,8 @@ export function buildNewsApiRequestUrl(query: ArticleQuery): string {
       q: keyword || 'news',
       from: fromDate,
       to: toDate,
-      sortBy: 'publishedAt',
+      // Rank by match quality for keyword searches, by recency otherwise.
+      sortBy: keyword ? 'relevancy' : 'publishedAt',
       language: 'en',
       page,
       pageSize,

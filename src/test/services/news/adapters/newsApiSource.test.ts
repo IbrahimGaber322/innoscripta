@@ -73,6 +73,19 @@ describe('buildNewsApiRequestUrl', () => {
     expect(url.searchParams.get('q')).toBe('news')
   })
 
+  it('ranks by relevancy for keyword searches and by recency otherwise', () => {
+    expect(
+      new URL(buildNewsApiRequestUrl({ ...base, keyword: 'egypt' })).searchParams.get(
+        'sortBy',
+      ),
+    ).toBe('relevancy')
+    expect(
+      new URL(
+        buildNewsApiRequestUrl({ ...base, fromDate: '2026-07-01' }),
+      ).searchParams.get('sortBy'),
+    ).toBe('publishedAt')
+  })
+
   it('defaults to general top headlines when no filters are set', () => {
     const url = new URL(buildNewsApiRequestUrl(base))
 

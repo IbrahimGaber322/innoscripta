@@ -68,6 +68,17 @@ describe('buildGuardianRequestUrl', () => {
     expect(url.searchParams.get('to-date')).toBe('2026-07-09')
   })
 
+  it('ranks by relevance for keyword searches and by recency otherwise', () => {
+    expect(
+      new URL(buildGuardianRequestUrl({ ...base, keyword: 'egypt' })).searchParams.get(
+        'order-by',
+      ),
+    ).toBe('relevance')
+    expect(new URL(buildGuardianRequestUrl(base)).searchParams.get('order-by')).toBe(
+      'newest',
+    )
+  })
+
   it('never includes the API key', () => {
     expect(buildGuardianRequestUrl(base)).not.toContain('api-key')
   })

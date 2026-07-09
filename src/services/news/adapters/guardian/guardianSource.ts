@@ -34,7 +34,8 @@ export function buildGuardianRequestUrl(query: ArticleQuery): string {
     'to-date': query.toDate,
     page: query.page,
     'page-size': query.pageSize,
-    'order-by': 'newest',
+    // Rank by match quality for keyword searches, by recency otherwise.
+    'order-by': query.keyword ? 'relevance' : 'newest',
     'show-fields': 'trailText,thumbnail,byline',
     'show-tags': 'contributor',
   })

@@ -46,7 +46,8 @@ export function buildNytRequestUrl(query: ArticleQuery): string {
     begin_date: toNytDate(query.fromDate),
     end_date: toNytDate(query.toDate),
     page: Math.min(query.page - 1, MAX_PAGE_INDEX),
-    sort: 'newest',
+    // Rank by match quality for keyword searches, by recency otherwise.
+    sort: query.keyword ? 'relevance' : 'newest',
   })
 }
 
