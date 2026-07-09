@@ -5,6 +5,7 @@ import { EmptyState } from '../components/articles/EmptyState'
 import { FeedFooter } from '../components/articles/FeedFooter'
 import { LeadArticle } from '../components/articles/LeadArticle'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
+import { TopStories } from '../components/articles/TopStories'
 import { CategoryTabs } from '../components/search/CategoryTabs'
 import { FiltersPanel } from '../components/search/FiltersPanel'
 import { SearchBar } from '../components/search/SearchBar'
@@ -31,6 +32,11 @@ export function HomePage() {
   const sentinelRef = useInfiniteScroll<HTMLDivElement>(() => query.fetchNextPage(), {
     enabled: query.hasNextPage && !query.isFetchingNextPage,
   })
+
+  // Browsing the front page gets the lead-story package; an active keyword
+  // search gets a flat, relevance-first list instead.
+  const showPackage = !filters.keyword && articles.length >= 4
+  const gridArticles = showPackage ? articles.slice(5) : articles.slice(1)
 
   return (
     <section>
@@ -74,12 +80,21 @@ export function HomePage() {
       ) : articles.length > 0 ? (
         <>
           <div className="mt-12">
-            <LeadArticle article={articles[0]} />
+            {showPackage ? (
+              <TopStories lead={articles[0]} latest={articles.slice(1, 5)} />
+            ) : (
+              <LeadArticle article={articles[0]} />
+            )}
           </div>
-          {articles.length > 1 && (
-            <div className="mt-12">
-              <ArticleGrid articles={articles.slice(1)} />
-            </div>
+          {gridArticles.length > 0 && (
+            <section className="mt-14">
+              {showPackage && (
+                <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
+                  More stories
+                </h2>
+              )}
+              <ArticleGrid articles={gridArticles} />
+            </section>
           )}
           <div ref={sentinelRef} className="h-px" aria-hidden="true" />
           <FeedFooter
