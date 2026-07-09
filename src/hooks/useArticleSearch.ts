@@ -4,7 +4,7 @@ import { fetchAggregated } from '../services/news/aggregator'
 import { ALL_SOURCES } from '../services/news/registry'
 import type { SearchFilters } from './useSearchFilters'
 
-export const PAGE_SIZE = 12
+const PAGE_SIZE = 12
 
 /** Infinite-scrolling aggregated article search for a set of filters. */
 export function useArticleSearch(filters: SearchFilters) {

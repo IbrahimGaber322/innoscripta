@@ -53,3 +53,8 @@ export interface ArticlePage {
   totalResults: number
   hasMore: boolean
 }
+
+/** Sort comparator: newest publication date first; unparsable dates last. */
+export function byNewestFirst(a: Article, b: Article): number {
+  return (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0)
+}

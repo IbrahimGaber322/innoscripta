@@ -1,4 +1,4 @@
-import type { Article, ArticleQuery } from '../../domain/article'
+import { byNewestFirst, type Article, type ArticleQuery } from '../../domain/article'
 import { ApiError } from './http'
 import type { NewsSource, SourceError } from './NewsSource'
 
@@ -48,10 +48,6 @@ function toSourceError(source: NewsSource, reason: unknown): SourceError {
   }
 
   return { sourceId: source.id, sourceName: source.name, message, status }
-}
-
-function byNewestFirst(a: Article, b: Article): number {
-  return (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0)
 }
 
 /**

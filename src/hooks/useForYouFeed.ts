@@ -1,7 +1,7 @@
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { usePreferences } from '../components/preferences/usePreferences'
-import type { Article } from '../domain/article'
+import { byNewestFirst, type Article } from '../domain/article'
 import type { Category } from '../domain/category'
 import { fetchAggregated } from '../services/news/aggregator'
 import type { SourceError } from '../services/news/NewsSource'
@@ -76,9 +76,7 @@ export function useForYouFeed(): ForYouFeed {
     }
   }
 
-  const merged = [...byId.values()].sort(
-    (a, b) => (Date.parse(b.publishedAt) || 0) - (Date.parse(a.publishedAt) || 0),
-  )
+  const merged = [...byId.values()].sort(byNewestFirst)
 
   const followed = merged.filter((article) =>
     matchesFollowedAuthor(article, preferences.authors),

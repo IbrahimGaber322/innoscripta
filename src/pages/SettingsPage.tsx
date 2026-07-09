@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { usePreferences } from '../components/preferences/usePreferences'
+import { CheckboxChip } from '../components/ui/CheckboxChip'
 import type { SourceId } from '../domain/article'
 import { CATEGORIES, CATEGORY_LABELS, type Category } from '../domain/category'
 import { ALL_SOURCES } from '../services/news/registry'
@@ -23,29 +24,6 @@ function SectionCard({
       <p className="mt-1 text-sm text-slate-600">{description}</p>
       <div className="mt-4">{children}</div>
     </section>
-  )
-}
-
-function CheckboxChip({
-  label,
-  checked,
-  onToggle,
-}: {
-  label: string
-  checked: boolean
-  onToggle: () => void
-}) {
-  return (
-    <label
-      className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm select-none ${
-        checked
-          ? 'border-sky-600 bg-sky-50 font-medium text-sky-800'
-          : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400'
-      }`}
-    >
-      <input type="checkbox" checked={checked} onChange={onToggle} className="sr-only" />
-      {label}
-    </label>
   )
 }
 
