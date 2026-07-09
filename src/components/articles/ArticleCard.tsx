@@ -13,60 +13,54 @@ export function ArticleCard({ article }: ArticleCardProps) {
   const outlet = article.sourceName !== sourceLabel ? article.sourceName : undefined
 
   return (
-    <article className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+    <article className="group flex h-full flex-col">
       {article.imageUrl && (
-        <img
-          src={article.imageUrl}
-          alt=""
-          loading="lazy"
-          className="h-44 w-full object-cover"
-          onError={(event) => {
-            event.currentTarget.style.display = 'none'
-          }}
-        />
+        <div className="aspect-3/2 overflow-hidden rounded bg-stone-200">
+          <img
+            src={article.imageUrl}
+            alt=""
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+            onError={(event) => {
+              event.currentTarget.parentElement!.style.display = 'none'
+            }}
+          />
+        </div>
       )}
 
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-800">
-            {sourceLabel}
-          </span>
-          {outlet && (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
-              {outlet}
-            </span>
-          )}
-          {article.category && (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
-              {CATEGORY_LABELS[article.category]}
-            </span>
-          )}
-        </div>
-
-        <h2 className="leading-snug font-semibold text-slate-900">
-          <a
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-sky-700"
-          >
-            {article.title}
-          </a>
-        </h2>
-
-        {article.description && (
-          <p className="line-clamp-3 text-sm text-slate-600">{article.description}</p>
+      <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-semibold tracking-widest uppercase">
+        <span className="text-stone-400">{sourceLabel}</span>
+        {outlet && <span className="text-stone-400">{outlet}</span>}
+        {article.category && (
+          <span className="text-accent">{CATEGORY_LABELS[article.category]}</span>
         )}
+      </div>
 
-        <div className="mt-auto flex flex-wrap items-center gap-x-2 pt-2 text-xs text-slate-500">
-          {article.author && (
-            <>
-              <span className="font-medium text-slate-600">{article.author}</span>
-              <span aria-hidden="true">·</span>
-            </>
-          )}
-          <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
-        </div>
+      <h3 className="mt-2 font-serif text-[21px] leading-tight font-medium">
+        <a
+          href={article.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-accent transition-colors"
+        >
+          {article.title}
+        </a>
+      </h3>
+
+      {article.description && (
+        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-stone-500">
+          {article.description}
+        </p>
+      )}
+
+      <div className="mt-auto pt-3 text-[12.5px] text-stone-400">
+        {article.author && (
+          <>
+            <span className="font-medium text-stone-600">{article.author}</span>
+            <span aria-hidden="true"> · </span>
+          </>
+        )}
+        <time dateTime={article.publishedAt}>{formatDate(article.publishedAt)}</time>
       </div>
     </article>
   )
