@@ -1,0 +1,49 @@
+{
+  "status": "OK",
+  "response": {
+    "docs": [
+      {
+        "_id": "nyt://article/1a2b3c4d",
+        "web_url": "https://www.nytimes.com/2026/07/03/technology/chip-manufacturing.html",
+        "snippet": "Chip makers announce new fabrication plants across three continents.",
+        "abstract": "Semiconductor companies are expanding manufacturing capacity worldwide.",
+        "headline": { "main": "Chip Makers Expand Global Manufacturing" },
+        "pub_date": "2026-07-03T12:00:00+0000",
+        "byline": { "original": "By John Doe and Mary Johnson" },
+        "news_desk": "Technology",
+        "section_name": "Technology",
+        "multimedia": [
+          {
+            "url": "images/2026/07/03/technology/chips/chips-articleLarge.jpg",
+            "subtype": "xlarge",
+            "type": "image"
+          }
+        ]
+      },
+      {
+        "_id": "nyt://article/5e6f7g8h",
+        "web_url": "https://www.nytimes.com/2026/07/02/business/markets-rally.html",
+        "abstract": "Stocks climbed as investors weighed new economic data.",
+        "headline": { "main": "Markets Rally on Economic Data" },
+        "pub_date": "2026-07-02T20:30:00+0000",
+        "byline": { "original": null },
+        "news_desk": "Business",
+        "section_name": "Business Day",
+        "multimedia": {
+          "caption": "Traders on the floor of the exchange.",
+          "default": {
+            "url": "https://static01.nyt.com/images/2026/07/02/business/markets/markets-superJumbo.jpg",
+            "height": 1365,
+            "width": 2048
+          },
+          "thumbnail": {
+            "url": "https://static01.nyt.com/images/2026/07/02/business/markets/markets-thumbStandard.jpg",
+            "height": 75,
+            "width": 75
+          }
+        }
+      }
+    ],
+    "meta": { "hits": 42, "offset": 0 }
+  }
+}
