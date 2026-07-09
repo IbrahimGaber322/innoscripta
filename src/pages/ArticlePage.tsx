@@ -148,9 +148,13 @@ export function ArticlePage() {
       ) : canFetchFull && fullQuery.isPending ? (
         <BodySkeleton />
       ) : (
-        <div className={BODY_CLASS}>
-          {extendedText && <p>{extendedText}</p>}
-          <div className="mt-10 font-sans">
+        <>
+          {extendedText && (
+            <div className={BODY_CLASS}>
+              <p>{extendedText}</p>
+            </div>
+          )}
+          <div className="mt-10">
             <a
               href={article.url}
               target="_blank"
@@ -160,11 +164,11 @@ export function ArticlePage() {
               Continue reading at {sourceLabel}
             </a>
             <p className="mt-3 text-xs text-stone-400">
-              The {sourceLabel} API shares a summary only — the full story lives on their
-              site.
+              {sourceLabel} only shares a summary via its API — the full story lives on
+              their site.
             </p>
           </div>
-        </div>
+        </>
       )}
     </article>
   )

@@ -14,6 +14,10 @@ in a clean, mobile-friendly interface.
 
 Additional behavior worth knowing about:
 
+- **In-app reader** — clicking an article opens a reader page. Guardian
+  stories render their full body (fetched by content id and sanitized with
+  DOMPurify); the other providers' APIs only share summaries, so those pages
+  show everything available plus a link to the original story.
 - **Graceful degradation** — every source is fetched independently
   (`Promise.allSettled`). A provider that is down, rate limited, or missing an
   API key becomes a warning chip; the rest of the page still renders.
