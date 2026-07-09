@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { SOURCE_LABELS, type Article } from '../../domain/article'
 import { CATEGORY_LABELS } from '../../domain/category'
@@ -10,6 +11,9 @@ interface TopPickProps {
 
 /** The single most relevant story, featured at the top of the For You feed. */
 export function TopPick({ article }: TopPickProps) {
+  const [imageFailed, setImageFailed] = useState(false)
+  const showImage = Boolean(article.imageUrl) && !imageFailed
+
   return (
     <Link
       to={articlePath(article)}
@@ -54,15 +58,13 @@ export function TopPick({ article }: TopPickProps) {
         </div>
       </div>
 
-      <div className="relative min-h-56 bg-stone-200 md:min-h-full">
-        {article.imageUrl ? (
+      <div className="bg-panel relative min-h-56 md:min-h-full">
+        {showImage ? (
           <img
             src={article.imageUrl}
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
-            onError={(event) => {
-              event.currentTarget.style.display = 'none'
-            }}
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
