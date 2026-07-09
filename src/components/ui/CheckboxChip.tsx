@@ -18,12 +18,12 @@ export function CheckboxChip({
   return (
     <label
       title={disabled ? disabledReason : undefined}
-      className={`rounded-full border px-3 py-1.5 text-sm select-none ${
+      className={`rounded-full border px-4 py-1.5 text-[13px] font-medium transition-colors select-none ${
         disabled
-          ? 'cursor-not-allowed border-slate-200 bg-slate-50 text-slate-400'
+          ? 'cursor-not-allowed border-stone-200 bg-stone-100 text-stone-300'
           : checked
-            ? 'cursor-pointer border-sky-600 bg-sky-50 font-medium text-sky-800'
-            : 'cursor-pointer border-slate-300 bg-white text-slate-600 hover:border-slate-400'
+            ? 'border-ink bg-ink text-paper cursor-pointer'
+            : 'cursor-pointer border-stone-300 bg-transparent text-stone-600 hover:border-stone-500'
       }`}
     >
       <input

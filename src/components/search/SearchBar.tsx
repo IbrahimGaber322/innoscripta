@@ -4,13 +4,24 @@ import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 interface SearchBarProps {
   value: string
   onChange: (keyword: string) => void
+  filtersOpen: boolean
+  onToggleFilters: () => void
+  /** Active refinements inside the filter panel (sources, dates). */
+  filterCount: number
 }
 
 /**
  * Keyword input with debounced writes: keystrokes update local state
- * immediately, the URL only after the user pauses typing.
+ * immediately, the URL only after the user pauses typing. The Filters
+ * button toggles the expandable panel below.
  */
-export function SearchBar({ value, onChange }: SearchBarProps) {
+export function SearchBar({
+  value,
+  onChange,
+  filtersOpen,
+  onToggleFilters,
+  filterCount,
+}: SearchBarProps) {
   const [input, setInput] = useState(value)
   const debouncedInput = useDebouncedValue(input)
   const lastEmitted = useRef(value)
@@ -31,29 +42,55 @@ export function SearchBar({ value, onChange }: SearchBarProps) {
   }, [value])
 
   return (
-    <div className="relative">
+    <div className="mt-8 flex items-center gap-4 border-b border-stone-300 pb-3">
       <svg
-        className="pointer-events-none absolute top-1/2 left-3 h-5 w-5 -translate-y-1/2 text-slate-400"
+        className="h-4.5 w-4.5 shrink-0 text-stone-400"
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
         strokeWidth={2}
+        strokeLinecap="round"
         aria-hidden="true"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
-        />
+        <circle cx="11" cy="11" r="7" />
+        <path d="M21 21l-4.3-4.3" />
       </svg>
+
       <input
         type="search"
         value={input}
         onChange={(event) => setInput(event.target.value)}
-        placeholder="Search articles by keyword..."
+        placeholder="Search articles by keyword"
         aria-label="Search articles"
-        className="w-full rounded-lg border border-slate-300 bg-white py-2.5 pr-4 pl-10 text-sm shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+        className="text-ink flex-1 border-none bg-transparent text-base placeholder:text-stone-400 focus:outline-none"
       />
+
+      <button
+        type="button"
+        onClick={onToggleFilters}
+        aria-expanded={filtersOpen}
+        className={`flex shrink-0 items-center gap-2 text-[13px] font-semibold transition-colors ${
+          filtersOpen ? 'text-ink' : 'hover:text-ink text-stone-600'
+        }`}
+      >
+        <svg
+          className="h-3.75 w-3.75"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+        Filters
+        {filterCount > 0 && (
+          <span className="bg-accent text-paper inline-flex h-4.5 min-w-4.5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold">
+            {filterCount}
+          </span>
+        )}
+      </button>
     </div>
   )
 }

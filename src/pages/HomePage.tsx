@@ -1,10 +1,12 @@
+import { useState } from 'react'
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
 import { EmptyState } from '../components/articles/EmptyState'
 import { LeadArticle } from '../components/articles/LeadArticle'
 import { LoadMoreButton } from '../components/articles/LoadMoreButton'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
-import { FilterBar } from '../components/search/FilterBar'
+import { CategoryTabs } from '../components/search/CategoryTabs'
+import { FiltersPanel } from '../components/search/FiltersPanel'
 import { SearchBar } from '../components/search/SearchBar'
 import { useArticleSearch } from '../hooks/useArticleSearch'
 import { useSearchFilters } from '../hooks/useSearchFilters'
@@ -13,6 +15,12 @@ import { formatToday } from '../lib/formatDate'
 export function HomePage() {
   const { filters, updateFilters, clearFilters, hasActiveFilters } = useSearchFilters()
   const query = useArticleSearch(filters)
+
+  const panelFilterCount =
+    filters.sourceIds.length + (filters.fromDate ? 1 : 0) + (filters.toDate ? 1 : 0)
+  // Open on arrival when a shared or restored URL already refines by
+  // source or date, so the active controls are visible.
+  const [filtersOpen, setFiltersOpen] = useState(panelFilterCount > 0)
 
   const articles = query.data?.pages.flatMap((page) => page.articles) ?? []
   // Per-source skip/failure status only changes between filter changes,
@@ -31,14 +39,24 @@ export function HomePage() {
       <SearchBar
         value={filters.keyword}
         onChange={(keyword) => updateFilters({ keyword }, { replace: true })}
+        filtersOpen={filtersOpen}
+        onToggleFilters={() => setFiltersOpen((open) => !open)}
+        filterCount={panelFilterCount}
       />
 
-      <FilterBar
-        filters={filters}
-        onChange={updateFilters}
-        onClear={clearFilters}
-        hasActiveFilters={hasActiveFilters}
+      <CategoryTabs
+        value={filters.categories}
+        onChange={(categories) => updateFilters({ categories })}
       />
+
+      {filtersOpen && (
+        <FiltersPanel
+          filters={filters}
+          onChange={updateFilters}
+          onClear={clearFilters}
+          hasActiveFilters={hasActiveFilters}
+        />
+      )}
 
       <div className="mt-6">
         <SourceStatusBanner errors={sourceErrors} />
