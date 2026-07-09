@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Article, ArticlePage, ArticleQuery, SourceId } from '../../domain/article'
-import { fetchAggregated } from './aggregator'
+import { fetchAggregated, mergeAggregatedPages } from './aggregator'
 import { ApiError } from './http'
 import type { NewsSource } from './NewsSource'
 
@@ -146,5 +146,34 @@ describe('fetchAggregated', () => {
     ])
 
     expect(result.hasMore).toBe(true)
+  })
+})
+
+describe('mergeAggregatedPages', () => {
+  it('merges pages deduped, newest first, with errors reported once', () => {
+    const shared = makeArticle({ id: 'shared', publishedAt: '2026-07-05T00:00:00Z' })
+    const older = makeArticle({ id: 'older', publishedAt: '2026-07-01T00:00:00Z' })
+    const error = {
+      sourceId: 'nytimes' as const,
+      sourceName: 'nytimes source',
+      message: 'rate limited',
+    }
+
+    const merged = mergeAggregatedPages([
+      { articles: [shared], errors: [error], hasMore: false },
+      { articles: [older, { ...shared }], errors: [error], hasMore: true },
+    ])
+
+    expect(merged.articles.map((a) => a.id)).toEqual(['shared', 'older'])
+    expect(merged.errors).toEqual([error])
+    expect(merged.hasMore).toBe(true)
+  })
+
+  it('returns an empty page for no input', () => {
+    expect(mergeAggregatedPages([])).toEqual({
+      articles: [],
+      errors: [],
+      hasMore: false,
+    })
   })
 })

@@ -37,6 +37,25 @@ function dedupeArticles(articles: Article[]): Article[] {
   return deduped
 }
 
+/**
+ * Merges several aggregated pages (e.g. one per selected category) into one:
+ * deduped, newest first, with per-source errors reported once.
+ */
+export function mergeAggregatedPages(pages: AggregatedPage[]): AggregatedPage {
+  const errorsBySource = new Map<string, SourceError>()
+  for (const page of pages) {
+    for (const error of page.errors) {
+      errorsBySource.set(error.sourceId, error)
+    }
+  }
+
+  return {
+    articles: dedupeArticles(pages.flatMap((page) => page.articles)).sort(byNewestFirst),
+    errors: [...errorsBySource.values()],
+    hasMore: pages.some((page) => page.hasMore),
+  }
+}
+
 function toSourceError(source: NewsSource, reason: unknown): SourceError {
   const status = reason instanceof ApiError ? reason.status : undefined
 

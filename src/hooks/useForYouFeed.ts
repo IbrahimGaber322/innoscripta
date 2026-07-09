@@ -1,9 +1,9 @@
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { usePreferences } from '../components/preferences/usePreferences'
-import { byNewestFirst, type Article } from '../domain/article'
+import type { Article } from '../domain/article'
 import type { Category } from '../domain/category'
-import { fetchAggregated } from '../services/news/aggregator'
+import { fetchAggregated, mergeAggregatedPages } from '../services/news/aggregator'
 import type { SourceError } from '../services/news/NewsSource'
 import { ALL_SOURCES } from '../services/news/registry'
 
@@ -71,28 +71,17 @@ export function useForYouFeed(): ForYouFeed {
   const isPending = results.some((result) => result.isPending)
 
   // Merging a few dozen articles is cheap enough to do on every render.
-  const byId = new Map<string, Article>()
-  const errorsBySource = new Map<string, SourceError>()
+  const merged = mergeAggregatedPages(
+    results.flatMap((result) => (result.data ? [result.data] : [])),
+  )
 
-  for (const result of results) {
-    for (const article of result.data?.articles ?? []) {
-      // The same story can come back for two categories; keep one copy.
-      byId.set(article.id, article)
-    }
-    for (const error of result.data?.errors ?? []) {
-      errorsBySource.set(error.sourceId, error)
-    }
-  }
-
-  const merged = [...byId.values()].sort(byNewestFirst)
-
-  const followed = merged.filter((article) =>
+  const followed = merged.articles.filter((article) =>
     matchesFollowedAuthor(article, preferences.authors),
   )
-  const rest = merged.filter(
+  const rest = merged.articles.filter(
     (article) => !matchesFollowedAuthor(article, preferences.authors),
   )
-  const errors = [...errorsBySource.values()]
+  const errors = merged.errors
 
   const isDefaultFeed =
     preferences.sources.length === 0 &&
