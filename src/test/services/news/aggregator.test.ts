@@ -152,43 +152,28 @@ describe('fetchAggregated', () => {
     expect(result.hasMore).toBe(true)
   })
 
-  it('sorts by date when browsing without a keyword', async () => {
-    const result = await fetchAggregated(QUERY, [
-      makeSource(
-        'newsapi',
-        page([makeArticle({ id: 'a', publishedAt: '2026-07-01T00:00:00Z' })]),
-      ),
-      makeSource(
-        'guardian',
-        page([makeArticle({ id: 'b', publishedAt: '2026-07-05T00:00:00Z' })]),
-      ),
-    ])
-
-    expect(result.articles.map((a) => a.id)).toEqual(['b', 'a'])
-  })
-
-  it('interleaves relevance-ranked lists for a keyword search', async () => {
-    // Each source is ranked by relevance (best first), not by date.
-    const result = await fetchAggregated({ ...QUERY, keyword: 'egypt' }, [
+  it('orders articles newest-first, for browsing and keyword searches alike', async () => {
+    const sources = [
       makeSource(
         'newsapi',
         page([
-          makeArticle({ id: 'a1-old', publishedAt: '2026-07-01T00:00:00Z' }),
-          makeArticle({ id: 'a2', publishedAt: '2026-07-09T00:00:00Z' }),
+          makeArticle({ id: 'oldest', publishedAt: '2026-07-01T00:00:00Z' }),
+          makeArticle({ id: 'newest', publishedAt: '2026-07-09T00:00:00Z' }),
         ]),
       ),
       makeSource(
         'guardian',
-        page([
-          makeArticle({ id: 'b1', publishedAt: '2026-07-03T00:00:00Z' }),
-          makeArticle({ id: 'b2', publishedAt: '2026-07-08T00:00:00Z' }),
-        ]),
+        page([makeArticle({ id: 'middle', publishedAt: '2026-07-05T00:00:00Z' })]),
       ),
-    ])
+    ]
 
-    // Round-robin, keeping each source's ranking — the newest article does
-    // NOT float to the top the way a date sort would.
-    expect(result.articles.map((a) => a.id)).toEqual(['a1-old', 'b1', 'a2', 'b2'])
+    // Adapters already narrowed to relevant matches; the aggregator just
+    // presents them newest-first, whether or not a keyword is set.
+    const browse = await fetchAggregated(QUERY, sources)
+    const search = await fetchAggregated({ ...QUERY, keyword: 'egypt' }, sources)
+
+    expect(browse.articles.map((a) => a.id)).toEqual(['newest', 'middle', 'oldest'])
+    expect(search.articles.map((a) => a.id)).toEqual(['newest', 'middle', 'oldest'])
   })
 })
 

@@ -39,24 +39,6 @@ function dedupeArticles(articles: Article[]): Article[] {
 }
 
 /**
- * Round-robin merge: first item of each group, then the second of each, and
- * so on. Preserves each source's own ranking while giving every source fair
- * representation near the top.
- */
-function interleave<T>(groups: T[][]): T[] {
-  const longest = Math.max(0, ...groups.map((group) => group.length))
-  const result: T[] = []
-  for (let i = 0; i < longest; i++) {
-    for (const group of groups) {
-      if (i < group.length) {
-        result.push(group[i])
-      }
-    }
-  }
-  return result
-}
-
-/**
  * Merges several aggregated pages (e.g. one per selected category) into one:
  * deduped, newest first, with per-source errors reported once.
  */
@@ -130,27 +112,26 @@ export async function fetchAggregated(
     eligible.map((source) => source.fetchArticles(query, signal)),
   )
 
-  const perSource: Article[][] = []
+  const articles: Article[] = []
   let hasMore = false
 
   settled.forEach((result, index) => {
     if (result.status === 'fulfilled') {
-      perSource.push(result.value.articles)
+      articles.push(...result.value.articles)
       hasMore = hasMore || result.value.hasMore
     } else {
       errors.push(toSourceError(eligible[index], result.reason))
     }
   })
 
-  // Keyword searches: each source ranks by relevance, and those scores are
-  // not comparable across providers — re-sorting by date would bury the best
-  // matches. Interleave the ranked lists round-robin instead. Browsing has no
-  // relevance signal, so recency ordering is the right default.
-  const ordered = query.keyword
-    ? dedupeArticles(interleave(perSource))
-    : dedupeArticles(perSource.flat()).sort(byNewestFirst)
-
-  return { articles: ordered, errors, hasMore }
+  // Relevance is enforced per adapter: a keyword search asks each provider for
+  // its best matches (not its newest articles), so everything returned here is
+  // already on-topic. The merged set is then presented newest-first.
+  return {
+    articles: dedupeArticles(articles).sort(byNewestFirst),
+    errors,
+    hasMore,
+  }
 }
 
 /**
