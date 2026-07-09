@@ -95,7 +95,7 @@ function MoreLikeThis({ articles }: { articles: Article[] }) {
                   loading="lazy"
                   className="h-full w-full object-cover"
                   onError={(event) => {
-                    event.currentTarget.parentElement!.style.display = 'none'
+                    event.currentTarget.style.display = 'none'
                   }}
                 />
               )}

@@ -10,18 +10,17 @@ interface ArticleCardProps {
   accentColor?: string
 }
 
+/** React.CSSProperties omits CSS custom properties, so widen it for the var. */
+type StyleWithAccent = React.CSSProperties & Record<'--card-accent', string>
+
 export function ArticleCard({ article, accentColor }: ArticleCardProps) {
   const readerPath = articlePath(article)
+  const style: StyleWithAccent | undefined = accentColor
+    ? { '--card-accent': accentColor }
+    : undefined
 
   return (
-    <article
-      className="group flex h-full flex-col"
-      style={
-        accentColor
-          ? ({ '--card-accent': accentColor } as React.CSSProperties)
-          : undefined
-      }
-    >
+    <article className="group flex h-full flex-col" style={style}>
       <Link to={readerPath} state={{ article }} tabIndex={-1} aria-hidden="true">
         <ArticleImage article={article} />
       </Link>
