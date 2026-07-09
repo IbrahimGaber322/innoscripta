@@ -9,18 +9,18 @@ const NAV_LINKS = [
 
 function navLinkClass({ isActive }: { isActive: boolean }): string {
   return isActive
-    ? 'rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white'
-    : 'rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+    ? 'rounded-full bg-ink px-4 py-2 text-sm font-semibold text-paper'
+    : 'rounded-full px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:text-ink'
 }
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <Link to="/" className="text-lg font-bold tracking-tight">
-          News<span className="text-sky-600">Hub</span>
+    <header className="bg-paper/90 sticky top-0 z-10 border-b border-stone-200 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
+        <Link to="/" className="font-serif text-2xl font-semibold tracking-tight">
+          News<span className="text-accent">Hub</span>
         </Link>
 
         <nav className="hidden gap-1 sm:flex" aria-label="Main">
@@ -33,7 +33,7 @@ export function Header() {
 
         <button
           type="button"
-          className="rounded-md p-2 text-slate-600 hover:bg-slate-100 sm:hidden"
+          className="hover:text-ink rounded-full p-2 text-stone-600 sm:hidden"
           aria-expanded={menuOpen}
           aria-label="Toggle navigation menu"
           onClick={() => setMenuOpen((open) => !open)}
@@ -65,7 +65,7 @@ export function Header() {
 
       {menuOpen && (
         <nav
-          className="flex flex-col gap-1 border-t border-slate-200 px-4 py-2 sm:hidden"
+          className="flex flex-col gap-1 border-t border-stone-200 px-4 py-3 sm:hidden"
           aria-label="Main mobile"
         >
           {NAV_LINKS.map((link) => (
