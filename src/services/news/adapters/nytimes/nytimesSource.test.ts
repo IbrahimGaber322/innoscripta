@@ -1,10 +1,21 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import fixture from '../../../../test/fixtures/nytimes.articlesearch.json'
 import { mapNytArticle } from './mapArticle'
-import { buildNytRequestUrl } from './nytimesSource'
+import { buildNytRequestUrl, NytimesSource } from './nytimesSource'
 import type { NytResponse } from './types'
 
 const { docs } = (fixture as NytResponse).response
+
+function stubFetch(body: unknown) {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: () => Promise.resolve(body),
+    }),
+  )
+}
 
 describe('mapNytArticle', () => {
   it('maps a raw doc, prefixing legacy relative image URLs', () => {
@@ -76,5 +87,47 @@ describe('buildNytRequestUrl', () => {
 
   it('never includes the API key', () => {
     expect(buildNytRequestUrl(base)).not.toContain('api-key')
+  })
+})
+
+describe('NytimesSource.fetchArticles', () => {
+  const source = new NytimesSource('test-key')
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('reads pagination from the current "metadata" field', async () => {
+    stubFetch(fixture)
+
+    const page = await source.fetchArticles({ page: 1, pageSize: 20 })
+
+    expect(page.totalResults).toBe(42)
+    expect(page.hasMore).toBe(true)
+    expect(page.articles).toHaveLength(2)
+  })
+
+  it('still reads pagination from the legacy "meta" field', async () => {
+    stubFetch({
+      status: 'OK',
+      response: { docs: [], meta: { hits: 3, offset: 0 } },
+    })
+
+    const page = await source.fetchArticles({ page: 1, pageSize: 20 })
+
+    expect(page.totalResults).toBe(3)
+    expect(page.hasMore).toBe(false)
+  })
+
+  it('tolerates a response with no pagination block at all', async () => {
+    stubFetch({
+      status: 'OK',
+      response: { docs: (fixture as NytResponse).response.docs },
+    })
+
+    const page = await source.fetchArticles({ page: 1, pageSize: 20 })
+
+    expect(page.totalResults).toBe(2)
+    expect(page.hasMore).toBe(false)
   })
 })

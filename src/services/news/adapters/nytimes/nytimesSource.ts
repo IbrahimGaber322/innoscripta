@@ -82,12 +82,16 @@ export class NytimesSource implements NewsSource {
     url.searchParams.set('api-key', this.apiKey ?? '')
 
     const data = await getJson<NytResponse>(url.toString(), { signal })
-    const { docs, meta } = data.response
+    const { docs } = data.response
+    // The pagination block was renamed meta → metadata in the 2024 schema
+    // revision; fall back to the page itself if neither is present.
+    const meta = data.response.metadata ?? data.response.meta
+    const hits = meta?.hits ?? docs.length
 
     return {
       articles: docs.map((raw) => mapNytArticle(raw, query.category)),
-      totalResults: meta.hits,
-      hasMore: query.page * NYT_PAGE_SIZE < meta.hits && query.page <= MAX_PAGE_INDEX,
+      totalResults: hits,
+      hasMore: query.page * NYT_PAGE_SIZE < hits && query.page <= MAX_PAGE_INDEX,
     }
   }
 }

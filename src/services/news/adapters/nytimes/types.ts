@@ -32,10 +32,18 @@ export interface NytDoc {
   multimedia?: NytLegacyMultimedia[] | NytModernMultimedia
 }
 
+export interface NytPaginationMeta {
+  hits: number
+  offset: number
+}
+
 export interface NytResponse {
   status: string
   response: {
     docs: NytDoc[]
-    meta: { hits: number; offset: number }
+    /** Current schema name for the pagination block. */
+    metadata?: NytPaginationMeta
+    /** Pre-2024 schema name, kept for compatibility. */
+    meta?: NytPaginationMeta
   }
 }
