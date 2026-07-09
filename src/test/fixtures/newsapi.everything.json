@@ -1,0 +1,36 @@
+{
+  "status": "ok",
+  "totalResults": 3,
+  "articles": [
+    {
+      "source": { "id": "techcrunch", "name": "TechCrunch" },
+      "author": "Jane Smith",
+      "title": "AI startups raise record funding in 2026",
+      "description": "Venture funding for AI companies reached new highs this quarter.",
+      "url": "https://techcrunch.com/2026/07/01/ai-startups-record-funding/",
+      "urlToImage": "https://techcrunch.com/images/ai-funding.jpg",
+      "publishedAt": "2026-07-01T14:30:00Z",
+      "content": "Venture funding for AI companies reached new highs this quarter..."
+    },
+    {
+      "source": { "id": null, "name": "[Removed]" },
+      "author": null,
+      "title": "[Removed]",
+      "description": "[Removed]",
+      "url": "https://removed.com",
+      "urlToImage": null,
+      "publishedAt": "2026-07-01T10:00:00Z",
+      "content": "[Removed]"
+    },
+    {
+      "source": { "id": null, "name": "Ars Technica" },
+      "author": null,
+      "title": "Quantum computing milestone announced",
+      "description": null,
+      "url": "https://arstechnica.com/science/2026/06/quantum-milestone/",
+      "urlToImage": null,
+      "publishedAt": "2026-06-30T09:15:00Z",
+      "content": null
+    }
+  ]
+}
