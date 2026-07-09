@@ -1,4 +1,5 @@
 import { getApiKey } from '../../config/env'
+import type { SourceId } from '../../domain/article'
 import { GuardianSource } from './adapters/guardian/guardianSource'
 import { NewsApiSource } from './adapters/newsapi/newsApiSource'
 import { NytimesSource } from './adapters/nytimes/nytimesSource'
@@ -14,3 +15,10 @@ export const ALL_SOURCES: NewsSource[] = [
   new GuardianSource(getApiKey('guardian')),
   new NytimesSource(getApiKey('nytimes')),
 ]
+
+/** Sources matching a selection; an empty selection means all of them. */
+export function getEffectiveSources(selectedIds: SourceId[]): NewsSource[] {
+  return selectedIds.length === 0
+    ? ALL_SOURCES
+    : ALL_SOURCES.filter((source) => selectedIds.includes(source.id))
+}

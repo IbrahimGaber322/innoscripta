@@ -5,7 +5,7 @@ import type { Article } from '../domain/article'
 import type { Category } from '../domain/category'
 import { fetchAggregated, mergeAggregatedPages } from '../services/news/aggregator'
 import type { SourceError } from '../services/news/NewsSource'
-import { ALL_SOURCES } from '../services/news/registry'
+import { getEffectiveSources } from '../services/news/registry'
 
 const FEED_PAGE_SIZE = 12
 
@@ -40,10 +40,7 @@ export function useForYouFeed(): ForYouFeed {
   const { preferences } = usePreferences()
 
   const sources = useMemo(
-    () =>
-      preferences.sources.length === 0
-        ? ALL_SOURCES
-        : ALL_SOURCES.filter((source) => preferences.sources.includes(source.id)),
+    () => getEffectiveSources(preferences.sources),
     [preferences.sources],
   )
 

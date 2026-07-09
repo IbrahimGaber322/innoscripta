@@ -49,10 +49,18 @@ vi.mock('@/services/news/registry', () => {
     isConfigured: () => true,
     fetchArticles,
   })
+  const allSources = () => [
+    makeFake('newsapi', newsapiFetch),
+    makeFake('guardian', guardianFetch),
+  ]
   return {
     get ALL_SOURCES() {
-      return [makeFake('newsapi', newsapiFetch), makeFake('guardian', guardianFetch)]
+      return allSources()
     },
+    getEffectiveSources: (selectedIds: string[]) =>
+      selectedIds.length === 0
+        ? allSources()
+        : allSources().filter((source) => selectedIds.includes(source.id)),
   }
 })
 

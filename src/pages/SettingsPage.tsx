@@ -3,7 +3,7 @@ import { usePreferences } from '../hooks/usePreferences'
 import { CheckboxChip } from '../components/ui/CheckboxChip'
 import type { SourceId } from '../domain/article'
 import { CATEGORIES, CATEGORY_LABELS, type Category } from '../domain/category'
-import { ALL_SOURCES } from '../services/news/registry'
+import { ALL_SOURCES, getEffectiveSources } from '../services/news/registry'
 
 function toggleItem<T>(list: T[], item: T): T[] {
   return list.includes(item) ? list.filter((entry) => entry !== item) : [...list, item]
@@ -113,12 +113,10 @@ export function SettingsPage() {
 
   // Categories at least one effective source can serve — picking anything
   // else would guarantee an empty feed (e.g. NewsAPI has no politics/world).
-  const effectiveSources =
-    preferences.sources.length === 0
-      ? ALL_SOURCES
-      : ALL_SOURCES.filter((source) => preferences.sources.includes(source.id))
   const supportedCategories = new Set(
-    effectiveSources.flatMap((source) => source.capabilities.categories),
+    getEffectiveSources(preferences.sources).flatMap(
+      (source) => source.capabilities.categories,
+    ),
   )
 
   return (

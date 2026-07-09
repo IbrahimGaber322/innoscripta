@@ -6,7 +6,7 @@ import {
   mergeAggregatedPages,
   type AggregatedPage,
 } from '../services/news/aggregator'
-import { ALL_SOURCES } from '../services/news/registry'
+import { getEffectiveSources } from '../services/news/registry'
 import type { SearchFilters } from './useSearchFilters'
 
 const PAGE_SIZE = 12
@@ -14,10 +14,7 @@ const PAGE_SIZE = 12
 /** Infinite-scrolling aggregated article search for a set of filters. */
 export function useArticleSearch(filters: SearchFilters) {
   const sources = useMemo(
-    () =>
-      filters.sourceIds.length === 0
-        ? ALL_SOURCES
-        : ALL_SOURCES.filter((source) => filters.sourceIds.includes(source.id)),
+    () => getEffectiveSources(filters.sourceIds),
     [filters.sourceIds],
   )
 
