@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import itemFixture from '@/test/fixtures/guardian.item.json'
 import fixture from '@/test/fixtures/guardian.search.json'
-import { buildGuardianRequestUrl } from '@/services/news/adapters/guardian/guardianSource'
+import {
+  buildGuardianItemUrl,
+  buildGuardianRequestUrl,
+  GuardianSource,
+} from '@/services/news/adapters/guardian/guardianSource'
 import { mapGuardianArticle } from '@/services/news/adapters/guardian/mapArticle'
 import type { GuardianResponse } from '@/services/news/adapters/guardian/types'
 
@@ -65,5 +70,42 @@ describe('buildGuardianRequestUrl', () => {
 
   it('never includes the API key', () => {
     expect(buildGuardianRequestUrl(base)).not.toContain('api-key')
+  })
+})
+
+describe('GuardianSource.fetchFullArticle', () => {
+  const source = new GuardianSource('test-key')
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('requests the article body on the item endpoint', () => {
+    const url = new URL(buildGuardianItemUrl('technology/2026/jul/02/eu-ai-act'))
+
+    expect(url.pathname).toBe('/technology/2026/jul/02/eu-ai-act')
+    expect(url.searchParams.get('show-fields')).toContain('body')
+  })
+
+  it('resolves a domain id to the article with its full body', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve(itemFixture),
+      }),
+    )
+
+    const full = await source.fetchFullArticle(
+      'guardian:technology/2026/jul/02/eu-ai-act-enforcement',
+    )
+
+    expect(full?.article.title).toBe('EU begins enforcing AI Act provisions')
+    expect(full?.bodyHtml).toContain('<h2>What changes now</h2>')
+  })
+
+  it('returns null for ids that belong to another source', async () => {
+    expect(await source.fetchFullArticle('nytimes:nyt://article/123')).toBeNull()
   })
 })

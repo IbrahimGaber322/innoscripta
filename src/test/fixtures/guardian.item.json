@@ -1,0 +1,22 @@
+{
+  "response": {
+    "status": "ok",
+    "content": {
+      "id": "technology/2026/jul/02/eu-ai-act-enforcement",
+      "type": "article",
+      "sectionId": "technology",
+      "sectionName": "Technology",
+      "webPublicationDate": "2026-07-02T08:45:00Z",
+      "webTitle": "EU begins enforcing AI Act provisions",
+      "webUrl": "https://www.theguardian.com/technology/2026/jul/02/eu-ai-act-enforcement",
+      "apiUrl": "https://content.guardianapis.com/technology/2026/jul/02/eu-ai-act-enforcement",
+      "fields": {
+        "trailText": "Regulators start applying the bloc's landmark rules",
+        "thumbnail": "https://media.guim.co.uk/eu-ai-act/500.jpg",
+        "byline": "Alex Hern",
+        "body": "<p>European regulators began enforcing the first tranche of AI Act provisions on Tuesday.</p><h2>What changes now</h2><p>Providers of general-purpose models face new transparency duties, and so-called high-risk systems must carry conformity assessments before deployment.</p>"
+      },
+      "tags": [{ "type": "contributor", "webTitle": "Alex Hern" }]
+    }
+  }
+}

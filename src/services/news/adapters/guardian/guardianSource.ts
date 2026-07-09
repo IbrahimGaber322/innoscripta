@@ -1,11 +1,12 @@
 import type { ArticlePage, ArticleQuery } from '../../../../domain/article'
 import { CATEGORIES, type Category } from '../../../../domain/category'
 import { buildUrl, getJson } from '../../http'
-import type { NewsSource, SourceCapabilities } from '../../NewsSource'
+import type { FullArticle, NewsSource, SourceCapabilities } from '../../NewsSource'
 import { mapGuardianArticle } from './mapArticle'
-import type { GuardianResponse } from './types'
+import type { GuardianItemResponse, GuardianResponse } from './types'
 
-const BASE_URL = 'https://content.guardianapis.com/search'
+const API_ORIGIN = 'https://content.guardianapis.com'
+const BASE_URL = `${API_ORIGIN}/search`
 
 /** Unified categories mapped to Guardian section ids. */
 const CATEGORY_TO_SECTION: Record<Category, string> = {
@@ -35,6 +36,17 @@ export function buildGuardianRequestUrl(query: ArticleQuery): string {
     'page-size': query.pageSize,
     'order-by': 'newest',
     'show-fields': 'trailText,thumbnail,byline',
+    'show-tags': 'contributor',
+  })
+}
+
+/**
+ * Builds the single-item URL for a Guardian content id, without the API key.
+ * This is the only bundled provider whose API returns full article bodies.
+ */
+export function buildGuardianItemUrl(providerId: string): string {
+  return buildUrl(`${API_ORIGIN}/${providerId}`, {
+    'show-fields': 'trailText,thumbnail,byline,body',
     'show-tags': 'contributor',
   })
 }
@@ -70,6 +82,32 @@ export class GuardianSource implements NewsSource {
       articles: results.map((raw) => mapGuardianArticle(raw, query.category)),
       totalResults: total,
       hasMore: currentPage < pages,
+    }
+  }
+
+  async fetchFullArticle(
+    articleId: string,
+    signal?: AbortSignal,
+  ): Promise<FullArticle | null> {
+    const providerId = articleId.startsWith(`${this.id}:`)
+      ? articleId.slice(this.id.length + 1)
+      : null
+    if (!providerId) {
+      return null
+    }
+
+    const url = new URL(buildGuardianItemUrl(providerId))
+    url.searchParams.set('api-key', this.apiKey ?? '')
+
+    const data = await getJson<GuardianItemResponse>(url.toString(), { signal })
+    const content = data.response.content
+    if (!content) {
+      return null
+    }
+
+    return {
+      article: mapGuardianArticle(content),
+      bodyHtml: content.fields?.body,
     }
   }
 }

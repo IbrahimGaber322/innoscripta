@@ -16,8 +16,18 @@ export interface GuardianArticle {
     trailText?: string
     thumbnail?: string
     byline?: string
+    /** Full article body as HTML; only requested on the item endpoint. */
+    body?: string
   }
   tags?: GuardianTag[]
+}
+
+/** Response of the single-item endpoint (content.guardianapis.com/{id}). */
+export interface GuardianItemResponse {
+  response: {
+    status: string
+    content?: GuardianArticle
+  }
 }
 
 export interface GuardianResponse {
