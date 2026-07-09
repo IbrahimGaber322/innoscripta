@@ -1,11 +1,6 @@
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import type { ArticleQuery } from '../domain/article'
-import {
-  fetchAggregated,
-  mergeAggregatedPages,
-  type AggregatedPage,
-} from '../services/news/aggregator'
+import { fetchAcrossCategories } from '../services/news/aggregator'
 import { getEffectiveSources } from '../services/news/registry'
 import type { SearchFilters } from './useSearchFilters'
 
@@ -20,28 +15,19 @@ export function useArticleSearch(filters: SearchFilters) {
 
   return useInfiniteQuery({
     queryKey: ['articles', filters],
-    queryFn: async ({ pageParam, signal }): Promise<AggregatedPage> => {
-      const query: ArticleQuery = {
-        keyword: filters.keyword || undefined,
-        fromDate: filters.fromDate,
-        toDate: filters.toDate,
-        page: pageParam,
-        pageSize: PAGE_SIZE,
-      }
-
-      if (filters.categories.length === 0) {
-        return fetchAggregated(query, sources, signal)
-      }
-
-      // Providers filter by one category per request, so multi-category
-      // selections fan out and merge (deduped, newest first).
-      const pages = await Promise.all(
-        filters.categories.map((category) =>
-          fetchAggregated({ ...query, category }, sources, signal),
-        ),
-      )
-      return mergeAggregatedPages(pages)
-    },
+    queryFn: ({ pageParam, signal }) =>
+      fetchAcrossCategories(
+        {
+          keyword: filters.keyword || undefined,
+          fromDate: filters.fromDate,
+          toDate: filters.toDate,
+          page: pageParam,
+          pageSize: PAGE_SIZE,
+        },
+        filters.categories,
+        sources,
+        signal,
+      ),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.hasMore ? allPages.length + 1 : undefined,

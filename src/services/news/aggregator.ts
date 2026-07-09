@@ -1,4 +1,5 @@
 import { byNewestFirst, type Article, type ArticleQuery } from '../../domain/article'
+import type { Category } from '../../domain/category'
 import { ApiError } from './http'
 import type { NewsSource, SourceError } from './NewsSource'
 
@@ -128,4 +129,27 @@ export async function fetchAggregated(
     errors,
     hasMore,
   }
+}
+
+/**
+ * Runs a query once per category and merges the results. Providers filter by
+ * one category per request, so a multi-category selection fans out here.
+ * An empty category list runs a single query with no category filter.
+ */
+export async function fetchAcrossCategories(
+  query: ArticleQuery,
+  categories: readonly Category[],
+  sources: NewsSource[],
+  signal?: AbortSignal,
+): Promise<AggregatedPage> {
+  if (categories.length === 0) {
+    return fetchAggregated(query, sources, signal)
+  }
+
+  const pages = await Promise.all(
+    categories.map((category) =>
+      fetchAggregated({ ...query, category }, sources, signal),
+    ),
+  )
+  return mergeAggregatedPages(pages)
 }

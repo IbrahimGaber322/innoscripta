@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Article, ArticlePage, ArticleQuery, SourceId } from '@/domain/article'
-import { fetchAggregated, mergeAggregatedPages } from '@/services/news/aggregator'
+import {
+  fetchAcrossCategories,
+  fetchAggregated,
+  mergeAggregatedPages,
+} from '@/services/news/aggregator'
 import { ApiError } from '@/services/news/http'
 import type { NewsSource } from '@/services/news/NewsSource'
 
@@ -175,5 +179,40 @@ describe('mergeAggregatedPages', () => {
       errors: [],
       hasMore: false,
     })
+  })
+})
+
+describe('fetchAcrossCategories', () => {
+  /** A source that returns one article named after the requested category. */
+  function categorySource(): NewsSource {
+    return {
+      id: 'guardian',
+      name: 'guardian source',
+      capabilities: {
+        categories: ['general', 'technology', 'science'],
+        dateFilter: true,
+        dateFilterWithCategory: true,
+      },
+      isConfigured: () => true,
+      fetchArticles: (query) =>
+        Promise.resolve(page([makeArticle({ id: query.category ?? 'latest' })], true)),
+    }
+  }
+
+  it('runs a single query with no category filter for an empty list', async () => {
+    const result = await fetchAcrossCategories(QUERY, [], [categorySource()])
+
+    expect(result.articles.map((a) => a.id)).toEqual(['latest'])
+  })
+
+  it('fans out one query per category and merges the results', async () => {
+    const result = await fetchAcrossCategories(
+      QUERY,
+      ['technology', 'science'],
+      [categorySource()],
+    )
+
+    expect(result.articles.map((a) => a.id).sort()).toEqual(['science', 'technology'])
+    expect(result.hasMore).toBe(true)
   })
 })
