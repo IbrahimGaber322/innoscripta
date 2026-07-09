@@ -1,15 +1,15 @@
 import { useState } from 'react'
-import { usePreferences } from '../hooks/usePreferences'
 import { CheckboxChip } from '../components/ui/CheckboxChip'
 import type { SourceId } from '../domain/article'
 import { CATEGORIES, CATEGORY_LABELS, type Category } from '../domain/category'
+import { usePreferences } from '../hooks/usePreferences'
 import { ALL_SOURCES, getEffectiveSources } from '../services/news/registry'
 
 function toggleItem<T>(list: T[], item: T): T[] {
   return list.includes(item) ? list.filter((entry) => entry !== item) : [...list, item]
 }
 
-function SectionCard({
+function PreferenceSection({
   title,
   description,
   children,
@@ -19,10 +19,10 @@ function SectionCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="font-semibold text-slate-900">{title}</h2>
-      <p className="mt-1 text-sm text-slate-600">{description}</p>
-      <div className="mt-4">{children}</div>
+    <section className="border-t border-stone-200 pt-6">
+      <h2 className="font-serif text-2xl font-medium">{title}</h2>
+      <p className="mt-1.5 text-sm leading-relaxed text-stone-500">{description}</p>
+      <div className="mt-5">{children}</div>
     </section>
   )
 }
@@ -47,7 +47,7 @@ function AuthorTagInput({
 
   return (
     <div>
-      <div className="flex gap-2">
+      <div className="flex items-center gap-3 border-b border-stone-300 pb-2.5">
         <input
           type="text"
           value={draft}
@@ -60,33 +60,33 @@ function AuthorTagInput({
           }}
           placeholder="e.g. Alex Hern"
           aria-label="Author name"
-          className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-sky-500 focus:ring-2 focus:ring-sky-200 focus:outline-none"
+          className="text-ink flex-1 border-none bg-transparent text-[15px] placeholder:text-stone-400 focus:outline-none"
         />
         <button
           type="button"
           onClick={addAuthor}
-          className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          className="bg-ink text-paper hover:bg-accent rounded-full px-5 py-2 text-[13px] font-semibold transition-colors"
         >
           Follow
         </button>
       </div>
 
       {authors.length > 0 && (
-        <ul className="mt-3 flex flex-wrap gap-2">
+        <ul className="mt-4 flex flex-wrap gap-2.5">
           {authors.map((author) => (
             <li
               key={author}
-              className="flex items-center gap-1.5 rounded-full bg-slate-100 py-1 pr-1.5 pl-3 text-sm text-slate-700"
+              className="bg-chip flex items-center gap-2 rounded-full py-1.5 pr-2 pl-3.5 text-[13px] font-medium text-stone-700"
             >
               {author}
               <button
                 type="button"
                 aria-label={`Unfollow ${author}`}
                 onClick={() => onChange(authors.filter((entry) => entry !== author))}
-                className="rounded-full p-0.5 text-slate-400 hover:bg-slate-200 hover:text-slate-700"
+                className="hover:text-ink rounded-full p-0.5 text-stone-400 transition-colors"
               >
                 <svg
-                  className="h-4 w-4"
+                  className="h-3.5 w-3.5"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -120,71 +120,75 @@ export function SettingsPage() {
   )
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-      <p className="text-slate-600">
+    <div className="max-w-170">
+      <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
+        Settings
+      </h1>
+      <p className="mt-3 text-[15px] leading-relaxed text-stone-500">
         Choose the sources, categories, and authors that shape your For You feed.
       </p>
 
-      <SectionCard
-        title="Preferred sources"
-        description="Only articles from these sources appear in your feed. None selected means all sources."
-      >
-        <div className="flex flex-wrap gap-2">
-          {ALL_SOURCES.map((source) => (
-            <CheckboxChip
-              key={source.id}
-              label={source.name}
-              checked={preferences.sources.includes(source.id)}
-              onToggle={() =>
-                updatePreferences({
-                  sources: toggleItem<SourceId>(preferences.sources, source.id),
-                })
-              }
-            />
-          ))}
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Preferred categories"
-        description="Your feed pulls the latest articles from each selected category. None selected means general news."
-      >
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((category) => {
-            const supported = supportedCategories.has(category)
-            return (
+      <div className="mt-14 flex flex-col gap-12">
+        <PreferenceSection
+          title="Preferred sources"
+          description="Only articles from these sources appear in your feed. None selected means all sources."
+        >
+          <div className="flex flex-wrap gap-2.5">
+            {ALL_SOURCES.map((source) => (
               <CheckboxChip
-                key={category}
-                label={CATEGORY_LABELS[category]}
-                checked={preferences.categories.includes(category)}
-                disabled={!supported}
-                disabledReason="None of your preferred sources supports this category"
+                key={source.id}
+                label={source.name}
+                checked={preferences.sources.includes(source.id)}
                 onToggle={() =>
                   updatePreferences({
-                    categories: toggleItem<Category>(preferences.categories, category),
+                    sources: toggleItem<SourceId>(preferences.sources, source.id),
                   })
                 }
               />
-            )
-          })}
-        </div>
-        {CATEGORIES.some((category) => !supportedCategories.has(category)) && (
-          <p className="mt-3 text-xs text-slate-500">
-            Grayed-out categories aren't offered by your preferred sources.
-          </p>
-        )}
-      </SectionCard>
+            ))}
+          </div>
+        </PreferenceSection>
 
-      <SectionCard
-        title="Followed authors"
-        description="Articles by these authors are pinned to the top of your feed."
-      >
-        <AuthorTagInput
-          authors={preferences.authors}
-          onChange={(authors) => updatePreferences({ authors })}
-        />
-      </SectionCard>
+        <PreferenceSection
+          title="Preferred categories"
+          description="Your feed pulls the latest articles from each selected category. None selected means general news."
+        >
+          <div className="flex flex-wrap gap-2.5">
+            {CATEGORIES.map((category) => {
+              const supported = supportedCategories.has(category)
+              return (
+                <CheckboxChip
+                  key={category}
+                  label={CATEGORY_LABELS[category]}
+                  checked={preferences.categories.includes(category)}
+                  disabled={!supported}
+                  disabledReason="None of your preferred sources supports this category"
+                  onToggle={() =>
+                    updatePreferences({
+                      categories: toggleItem<Category>(preferences.categories, category),
+                    })
+                  }
+                />
+              )
+            })}
+          </div>
+          {CATEGORIES.some((category) => !supportedCategories.has(category)) && (
+            <p className="mt-3 text-xs text-stone-400">
+              Grayed-out categories aren't offered by your preferred sources.
+            </p>
+          )}
+        </PreferenceSection>
+
+        <PreferenceSection
+          title="Followed authors"
+          description="Articles by these authors are pinned to the top of your feed."
+        >
+          <AuthorTagInput
+            authors={preferences.authors}
+            onChange={(authors) => updatePreferences({ authors })}
+          />
+        </PreferenceSection>
+      </div>
     </div>
   )
 }

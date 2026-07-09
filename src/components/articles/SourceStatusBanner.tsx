@@ -14,18 +14,16 @@ export function SourceStatusBanner({ errors }: SourceStatusBannerProps) {
   }
 
   return (
-    <div
-      role="status"
-      className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-    >
-      <p className="font-medium">Some sources are unavailable</p>
-      <ul className="mt-1 flex flex-wrap gap-2">
+    <div role="status" className="bg-panel rounded-lg px-5 py-4">
+      <p className="text-ink text-sm font-semibold">Some sources are unavailable</p>
+      <ul className="mt-2 flex flex-wrap gap-2">
         {errors.map((error) => (
           <li
             key={error.sourceId}
-            className="rounded-full border border-amber-300 bg-white px-3 py-1 text-xs"
+            className="bg-paper rounded-full border border-stone-200 px-3.5 py-1 text-xs text-stone-600"
           >
-            <span className="font-semibold">{error.sourceName}:</span> {error.message}
+            <span className="font-semibold text-stone-700">{error.sourceName}:</span>{' '}
+            {error.message}
           </li>
         ))}
       </ul>
