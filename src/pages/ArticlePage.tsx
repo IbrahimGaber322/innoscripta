@@ -1,12 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArticleImage } from '../components/articles/ArticleImage'
-import { ArticleByline, ArticleKicker } from '../components/articles/ArticleMeta'
 import { EmptyState } from '../components/articles/EmptyState'
+import { CATEGORY_LABELS } from '../domain/category'
 import { SOURCE_LABELS, type Article } from '../domain/article'
-import { decodeArticleId } from '../lib/articleRoute'
+import { articlePath, decodeArticleId } from '../lib/articleRoute'
+import { formatDate } from '../lib/formatDate'
+import { useRelatedArticles } from '../hooks/useRelatedArticles'
 import { ALL_SOURCES } from '../services/news/registry'
+
+const COLUMN = 'mx-auto max-w-[760px]'
 
 const BODY_CLASS =
   'mt-8 font-serif text-[17px] leading-[1.75] text-stone-800 ' +
@@ -17,10 +21,20 @@ const BODY_CLASS =
   '[&_blockquote]:mt-5 [&_blockquote]:border-l-2 [&_blockquote]:border-stone-300 [&_blockquote]:pl-4 [&_blockquote]:italic ' +
   '[&_ul]:mt-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:mt-5 [&_ol]:list-decimal [&_ol]:pl-6'
 
+/** Two-letter monogram from the byline (or the source, when anonymous). */
+function initials(article: Article): string {
+  const source = article.author ?? SOURCE_LABELS[article.sourceId]
+  const words = source
+    .replace(/^by\s+/i, '')
+    .split(/\s+/)
+    .filter(Boolean)
+  return (words[0]?.[0] ?? 'N') + (words[1]?.[0] ?? '')
+}
+
 function BodySkeleton() {
   return (
     <div
-      className="mt-8 animate-pulse space-y-4"
+      className={`${COLUMN} mt-8 animate-pulse space-y-4`}
       role="status"
       aria-label="Loading article"
     >
@@ -30,6 +44,72 @@ function BodySkeleton() {
           className={`h-4 rounded bg-stone-200 ${index % 3 === 2 ? 'w-3/4' : 'w-full'}`}
         />
       ))}
+    </div>
+  )
+}
+
+function ContinueReading({ article }: { article: Article }) {
+  const sourceLabel = SOURCE_LABELS[article.sourceId]
+  return (
+    <div className="bg-panel mt-14 flex flex-wrap items-center justify-between gap-6 rounded-lg p-8">
+      <div>
+        <div className="font-serif text-xl font-medium">
+          Continue reading at {sourceLabel}
+        </div>
+        <p className="mt-1 text-[13.5px] text-stone-500">
+          NewsHub links you to the original reporting — no rehosting, no paywall tricks.
+        </p>
+      </div>
+      <a
+        href={article.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="bg-ink text-paper hover:bg-accent inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-colors"
+      >
+        Open original ↗
+      </a>
+    </div>
+  )
+}
+
+function MoreLikeThis({ articles }: { articles: Article[] }) {
+  return (
+    <div className={`${COLUMN} mt-18`}>
+      <h2 className="border-t border-stone-200 pt-6 font-serif text-2xl font-medium">
+        More like this
+      </h2>
+      <div className="mt-6 grid grid-cols-1 gap-8 sm:grid-cols-2">
+        {articles.map((article) => (
+          <Link
+            key={article.id}
+            to={articlePath(article)}
+            state={{ article }}
+            className="group flex items-start gap-4"
+          >
+            <div className="bg-panel aspect-3/2 w-30 shrink-0 overflow-hidden rounded">
+              {article.imageUrl && (
+                <img
+                  src={article.imageUrl}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                  onError={(event) => {
+                    event.currentTarget.parentElement!.style.display = 'none'
+                  }}
+                />
+              )}
+            </div>
+            <div>
+              <div className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
+                {SOURCE_LABELS[article.sourceId]}
+              </div>
+              <h3 className="group-hover:text-accent mt-1.5 font-serif text-[17px] leading-snug font-medium transition-colors">
+                {article.title}
+              </h3>
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   )
 }
@@ -60,26 +140,25 @@ export function ArticlePage() {
 
   const article = stateArticle ?? fullQuery.data?.article
   const bodyHtml = fullQuery.data?.bodyHtml
+  const related = useRelatedArticles(article).data ?? []
 
   if (!article) {
     if (canFetchFull && fullQuery.isPending) {
       return <BodySkeleton />
     }
     return (
-      <div>
-        <EmptyState
-          title="Article unavailable"
-          message="This article is no longer available in this session. Head back to the headlines to keep reading."
+      <EmptyState
+        title="Article unavailable"
+        message="This article is no longer available in this session. Head back to the headlines to keep reading."
+      >
+        <button
+          type="button"
+          onClick={() => navigate('/')}
+          className="bg-ink text-paper hover:bg-accent rounded-full px-6 py-2.5 text-sm font-semibold transition-colors"
         >
-          <button
-            type="button"
-            onClick={() => navigate('/')}
-            className="bg-ink text-paper hover:bg-accent rounded-full px-6 py-2.5 text-sm font-semibold transition-colors"
-          >
-            Back to headlines
-          </button>
-        </EmptyState>
-      </div>
+          Back to headlines
+        </button>
+      </EmptyState>
     )
   }
 
@@ -96,76 +175,98 @@ export function ArticlePage() {
       <button
         type="button"
         onClick={() => (window.history.state?.idx ? navigate(-1) : navigate('/'))}
-        className="hover:text-ink text-[13px] font-semibold text-stone-500 transition-colors"
+        className="hover:text-ink flex items-center gap-2 text-[13px] font-semibold text-stone-500 transition-colors"
       >
         ← Back
       </button>
 
-      <div className="mt-6">
-        <ArticleKicker article={article} />
-      </div>
+      <header className={`${COLUMN} mt-12`}>
+        <div className="flex items-center gap-3 text-[11px] font-semibold tracking-widest uppercase">
+          <span className="text-stone-400">{sourceLabel}</span>
+          {article.category && (
+            <>
+              <span className="h-[3px] w-[3px] rounded-full bg-stone-300" />
+              <span className="text-accent">{CATEGORY_LABELS[article.category]}</span>
+            </>
+          )}
+        </div>
 
-      <h1 className="mt-3 font-serif text-3xl leading-[1.1] font-medium tracking-tight sm:text-[44px]">
-        {article.title}
-      </h1>
+        <h1 className="mt-5 font-serif text-3xl leading-[1.1] font-medium tracking-tight sm:text-[48px]">
+          {article.title}
+        </h1>
 
-      {article.description && (
-        <p className="mt-4 text-[17px] leading-relaxed text-stone-600">
-          {article.description}
-        </p>
-      )}
+        {article.description && (
+          <p className="mt-5 font-serif text-[21px] leading-relaxed text-stone-600">
+            {article.description}
+          </p>
+        )}
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-y border-stone-200 py-3">
-        <ArticleByline article={article} />
-        <a
-          href={article.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-accent hover:text-ink text-[13px] font-semibold transition-colors"
-        >
-          Read at {sourceLabel} ↗
-        </a>
-      </div>
+        <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-stone-200 py-4">
+          <div className="flex items-center gap-3">
+            <span className="bg-ink text-paper flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold uppercase">
+              {initials(article)}
+            </span>
+            <div>
+              {article.author && (
+                <div className="text-ink text-sm font-semibold">{article.author}</div>
+              )}
+              <div className="text-[12.5px] text-stone-400">
+                <time dateTime={article.publishedAt}>
+                  {formatDate(article.publishedAt)}
+                </time>
+              </div>
+            </div>
+          </div>
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-ink hover:text-accent text-[13px] font-semibold transition-colors"
+          >
+            Read at {sourceLabel} ↗
+          </a>
+        </div>
+      </header>
 
       {article.imageUrl && (
-        <div className="mt-8">
+        <figure className="mx-auto mt-12 max-w-[1000px]">
           <ArticleImage article={article} aspectClass="aspect-16/9" />
-        </div>
+          <figcaption className="mt-2.5 text-[12.5px] text-stone-400">
+            Photograph via {sourceLabel}
+          </figcaption>
+        </figure>
       )}
 
-      {bodyHtml ? (
-        <div
-          className={BODY_CLASS}
-          // Provider HTML is sanitized before it ever reaches the DOM.
-          dangerouslySetInnerHTML={{
-            __html: DOMPurify.sanitize(bodyHtml, { USE_PROFILES: { html: true } }),
-          }}
-        />
-      ) : canFetchFull && fullQuery.isPending ? (
-        <BodySkeleton />
-      ) : (
-        <>
-          {extendedText && (
+      <div className={COLUMN}>
+        {bodyHtml ? (
+          <div
+            className={BODY_CLASS}
+            // Provider HTML is sanitized before it ever reaches the DOM.
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(bodyHtml, { USE_PROFILES: { html: true } }),
+            }}
+          />
+        ) : canFetchFull && fullQuery.isPending ? (
+          <div className="mt-8 animate-pulse space-y-4">
+            {Array.from({ length: 6 }, (_, index) => (
+              <div
+                key={index}
+                className={`h-4 rounded bg-stone-200 ${index % 3 === 2 ? 'w-3/4' : 'w-full'}`}
+              />
+            ))}
+          </div>
+        ) : (
+          extendedText && (
             <div className={BODY_CLASS}>
               <p>{extendedText}</p>
             </div>
-          )}
-          <div className="mt-10">
-            <a
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-ink text-paper hover:bg-accent inline-block rounded-full px-6 py-2.5 text-sm font-semibold transition-colors"
-            >
-              Continue reading at {sourceLabel}
-            </a>
-            <p className="mt-3 text-xs text-stone-400">
-              {sourceLabel} only shares a summary via its API — the full story lives on
-              their site.
-            </p>
-          </div>
-        </>
-      )}
+          )
+        )}
+
+        <ContinueReading article={article} />
+      </div>
+
+      {related.length > 0 && <MoreLikeThis articles={related} />}
     </article>
   )
 }

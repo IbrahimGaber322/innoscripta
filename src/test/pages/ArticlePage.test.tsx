@@ -50,9 +50,10 @@ describe('ArticlePage', () => {
   it('links to the source for the rest of the story', () => {
     renderReader()
 
-    const cta = screen.getByRole('link', {
-      name: /continue reading at the new york times/i,
-    })
+    expect(
+      screen.getByText(/continue reading at the new york times/i),
+    ).toBeInTheDocument()
+    const cta = screen.getByRole('link', { name: /open original/i })
     expect(cta).toHaveAttribute('href', nytArticle.url)
     expect(cta).toHaveAttribute('target', '_blank')
   })
