@@ -1,9 +1,8 @@
-import { useQueries } from '@tanstack/react-query'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { usePreferences } from './usePreferences'
 import type { Article } from '../domain/article'
-import type { Category } from '../domain/category'
-import { fetchAggregated, mergeAggregatedPages } from '../services/news/aggregator'
+import { fetchAcrossCategories, mergeAggregatedPages } from '../services/news/aggregator'
 import type { SourceError } from '../services/news/NewsSource'
 import { getEffectiveSources } from '../services/news/registry'
 
@@ -20,6 +19,9 @@ export interface ForYouFeed {
   errors: SourceError[]
   /** True when the user has not personalized anything yet. */
   isDefaultFeed: boolean
+  fetchNextPage: () => void
+  hasNextPage: boolean
+  isFetchingNextPage: boolean
 }
 
 export function matchesFollowedAuthor(article: Article, authors: string[]): boolean {
@@ -33,8 +35,9 @@ export function matchesFollowedAuthor(article: Article, authors: string[]): bool
 /**
  * Builds the personalized feed: one aggregated query per preferred category
  * (or one general query when none are chosen), restricted to preferred
- * sources. Followed authors partition the merged result rather than filter
- * it — a hard byline filter would usually leave the page empty.
+ * sources, paginated for infinite scroll. Followed authors partition the
+ * merged result rather than filter it — a hard byline filter would usually
+ * leave the page empty.
  */
 export function useForYouFeed(): ForYouFeed {
   const { preferences } = usePreferences()
@@ -47,43 +50,50 @@ export function useForYouFeed(): ForYouFeed {
   // Drop categories none of the effective sources can serve (e.g. politics
   // with NewsAPI only); an unsupported-only selection falls back to latest
   // news instead of a guaranteed-empty feed.
-  const supportedCategories = new Set(
-    sources.flatMap((source) => source.capabilities.categories),
-  )
-  const preferred = preferences.categories.filter((category) =>
-    supportedCategories.has(category),
-  )
+  const preferred = useMemo(() => {
+    const supported = new Set(sources.flatMap((source) => source.capabilities.categories))
+    return preferences.categories
+      .filter((category) => supported.has(category))
+      .slice(0, MAX_FEED_CATEGORIES)
+  }, [preferences.categories, sources])
 
-  const categories: (Category | undefined)[] =
-    preferred.length > 0 ? preferred.slice(0, MAX_FEED_CATEGORIES) : [undefined]
-
-  const results = useQueries({
-    queries: categories.map((category) => ({
-      queryKey: ['for-you', category ?? 'latest', preferences.sources],
-      queryFn: ({ signal }: { signal: AbortSignal }) =>
-        fetchAggregated({ category, page: 1, pageSize: FEED_PAGE_SIZE }, sources, signal),
-    })),
+  const query = useInfiniteQuery({
+    // Authors are applied client-side, so they stay out of the query key.
+    queryKey: ['for-you', preferences.sources, preferred],
+    queryFn: ({ pageParam, signal }) =>
+      fetchAcrossCategories(
+        { page: pageParam, pageSize: FEED_PAGE_SIZE },
+        preferred,
+        sources,
+        signal,
+      ),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.hasMore ? allPages.length + 1 : undefined,
   })
 
-  const isPending = results.some((result) => result.isPending)
-
   // Merging a few dozen articles is cheap enough to do on every render.
-  const merged = mergeAggregatedPages(
-    results.flatMap((result) => (result.data ? [result.data] : [])),
-  )
-
+  const merged = mergeAggregatedPages(query.data?.pages ?? [])
   const followed = merged.articles.filter((article) =>
     matchesFollowedAuthor(article, preferences.authors),
   )
   const rest = merged.articles.filter(
     (article) => !matchesFollowedAuthor(article, preferences.authors),
   )
-  const errors = merged.errors
 
   const isDefaultFeed =
     preferences.sources.length === 0 &&
     preferences.categories.length === 0 &&
     preferences.authors.length === 0
 
-  return { isPending, followed, rest, errors, isDefaultFeed }
+  return {
+    isPending: query.isPending,
+    followed,
+    rest,
+    errors: merged.errors,
+    isDefaultFeed,
+    fetchNextPage: query.fetchNextPage,
+    hasNextPage: query.hasNextPage,
+    isFetchingNextPage: query.isFetchingNextPage,
+  }
 }
