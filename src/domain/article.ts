@@ -31,6 +31,8 @@ export interface Article {
   title: string
   /** Plain-text summary; adapters strip any provider HTML. */
   description?: string
+  /** Longer plain-text excerpt where the provider offers one. */
+  content?: string
   url: string
   imageUrl?: string
   /** Normalized byline without a leading "By ". */

@@ -48,6 +48,7 @@ export function mapNytArticle(raw: NytDoc, fallbackCategory?: Category): Article
     sourceName: 'The New York Times',
     title: raw.headline.main,
     description: raw.abstract?.trim() || raw.snippet?.trim() || undefined,
+    content: raw.lead_paragraph?.trim() || undefined,
     url: raw.web_url,
     imageUrl: resolveImageUrl(raw.multimedia),
     author: raw.byline?.original?.replace(/^by\s+/i, '').trim() || undefined,

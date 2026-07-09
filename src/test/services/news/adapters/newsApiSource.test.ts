@@ -16,6 +16,8 @@ describe('mapNewsApiArticle', () => {
       sourceName: 'TechCrunch',
       title: 'AI startups raise record funding in 2026',
       description: 'Venture funding for AI companies reached new highs this quarter.',
+      content:
+        'Venture funding for AI companies reached new highs this quarter, with several mega-rounds closing in June.',
       url: 'https://techcrunch.com/2026/07/01/ai-startups-record-funding/',
       imageUrl: 'https://techcrunch.com/images/ai-funding.jpg',
       author: 'Jane Smith',

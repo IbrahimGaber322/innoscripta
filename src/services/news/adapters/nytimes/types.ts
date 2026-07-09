@@ -24,6 +24,7 @@ export interface NytDoc {
   web_url: string
   snippet?: string
   abstract?: string
+  lead_paragraph?: string
   headline: { main: string }
   pub_date: string
   byline?: { original?: string | null }

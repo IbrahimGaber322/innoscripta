@@ -31,6 +31,8 @@ describe('mapNytArticle', () => {
       title: 'Chip Makers Expand Global Manufacturing',
       description:
         'Semiconductor companies are expanding manufacturing capacity worldwide.',
+      content:
+        'Semiconductor companies announced a wave of new fabrication plants this week, spanning three continents and hundreds of billions of dollars in planned investment.',
       url: 'https://www.nytimes.com/2026/07/03/technology/chip-manufacturing.html',
       imageUrl:
         'https://www.nytimes.com/images/2026/07/03/technology/chips/chips-articleLarge.jpg',
