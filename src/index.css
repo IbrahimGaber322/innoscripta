@@ -1,5 +1,19 @@
 @import 'tailwindcss';
 
+@theme {
+  /* Editorial type pairing: Newsreader for headlines, Instrument Sans for UI. */
+  --font-sans:
+    'Instrument Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Newsreader', ui-serif, Georgia, serif;
+
+  /* Warm paper-and-ink palette with a burnt-orange accent. */
+  --color-paper: #fafaf8;
+  --color-ink: #111110;
+  --color-accent: #c2410c;
+  --color-panel: #f4f3f0;
+  --color-chip: #f0efec;
+}
+
 body {
-  @apply bg-slate-50 text-slate-900 antialiased;
+  @apply bg-paper text-ink font-sans antialiased;
 }
