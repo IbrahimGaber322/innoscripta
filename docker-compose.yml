@@ -1,0 +1,12 @@
+# Compose reads API keys from a .env file in this directory (see .env.example).
+services:
+  web:
+    build:
+      context: .
+      args:
+        VITE_NEWSAPI_API_KEY: ${VITE_NEWSAPI_API_KEY:-}
+        VITE_GUARDIAN_API_KEY: ${VITE_GUARDIAN_API_KEY:-}
+        VITE_NYT_API_KEY: ${VITE_NYT_API_KEY:-}
+    image: news-aggregator
+    ports:
+      - '8080:80'
