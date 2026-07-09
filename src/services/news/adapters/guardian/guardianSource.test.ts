@@ -1,0 +1,69 @@
+import { describe, expect, it } from 'vitest'
+import fixture from '../../../../test/fixtures/guardian.search.json'
+import { buildGuardianRequestUrl } from './guardianSource'
+import { mapGuardianArticle } from './mapArticle'
+import type { GuardianResponse } from './types'
+
+const { results } = (fixture as GuardianResponse).response
+
+describe('mapGuardianArticle', () => {
+  it('maps a raw article and strips HTML from the trail text', () => {
+    const article = mapGuardianArticle(results[0])
+
+    expect(article).toEqual({
+      id: 'guardian:technology/2026/jul/02/eu-ai-act-enforcement',
+      sourceId: 'guardian',
+      sourceName: 'The Guardian',
+      title: 'EU begins enforcing AI Act provisions',
+      description:
+        "Regulators start applying the bloc's landmark rules & companies scramble to comply",
+      url: 'https://www.theguardian.com/technology/2026/jul/02/eu-ai-act-enforcement',
+      imageUrl: 'https://media.guim.co.uk/eu-ai-act/500.jpg',
+      author: 'Alex Hern',
+      category: 'technology',
+      publishedAt: '2026-07-02T08:45:00Z',
+    })
+  })
+
+  it('falls back to the contributor tag when the byline field is missing', () => {
+    const article = mapGuardianArticle(results[1])
+
+    expect(article.author).toBe('Tumaini Carayol')
+  })
+
+  it('derives the category from the Guardian section', () => {
+    expect(mapGuardianArticle(results[1]).category).toBe('sports')
+  })
+})
+
+describe('buildGuardianRequestUrl', () => {
+  const base = { page: 1, pageSize: 20 }
+
+  it('requests the fields and tags needed for the domain model', () => {
+    const url = new URL(buildGuardianRequestUrl(base))
+
+    expect(url.searchParams.get('show-fields')).toBe('trailText,thumbnail,byline')
+    expect(url.searchParams.get('show-tags')).toBe('contributor')
+  })
+
+  it('composes keyword, section, and date filters in one request', () => {
+    const url = new URL(
+      buildGuardianRequestUrl({
+        ...base,
+        keyword: 'climate',
+        category: 'sports',
+        fromDate: '2026-07-01',
+        toDate: '2026-07-09',
+      }),
+    )
+
+    expect(url.searchParams.get('q')).toBe('climate')
+    expect(url.searchParams.get('section')).toBe('sport')
+    expect(url.searchParams.get('from-date')).toBe('2026-07-01')
+    expect(url.searchParams.get('to-date')).toBe('2026-07-09')
+  })
+
+  it('never includes the API key', () => {
+    expect(buildGuardianRequestUrl(base)).not.toContain('api-key')
+  })
+})
