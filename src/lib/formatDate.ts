@@ -29,3 +29,9 @@ export function greeting(now: Date = new Date()): string {
   if (hour < 18) return 'Good afternoon'
   return 'Good evening'
 }
+
+/** Today in local time as YYYY-MM-DD, for capping date inputs. */
+export function todayISO(now: Date = new Date()): string {
+  const local = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+  return local.toISOString().slice(0, 10)
+}
