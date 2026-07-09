@@ -1,12 +1,14 @@
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
 import { EmptyState } from '../components/articles/EmptyState'
+import { LeadArticle } from '../components/articles/LeadArticle'
 import { LoadMoreButton } from '../components/articles/LoadMoreButton'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
 import { FilterBar } from '../components/search/FilterBar'
 import { SearchBar } from '../components/search/SearchBar'
 import { useArticleSearch } from '../hooks/useArticleSearch'
 import { useSearchFilters } from '../hooks/useSearchFilters'
+import { formatToday } from '../lib/formatDate'
 
 export function HomePage() {
   const { filters, updateFilters, clearFilters, hasActiveFilters } = useSearchFilters()
@@ -18,10 +20,13 @@ export function HomePage() {
   const sourceErrors = query.data?.pages[0]?.errors ?? []
 
   return (
-    <section className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">
-        {filters.keyword ? `Results for "${filters.keyword}"` : 'Latest news'}
-      </h1>
+    <section>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+        <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
+          {filters.keyword ? `Results for “${filters.keyword}”` : 'Latest news'}
+        </h1>
+        <div className="text-[13px] text-stone-500">{formatToday()}</div>
+      </div>
 
       <SearchBar
         value={filters.keyword}
@@ -35,25 +40,40 @@ export function HomePage() {
         hasActiveFilters={hasActiveFilters}
       />
 
-      <SourceStatusBanner errors={sourceErrors} />
+      <div className="mt-6">
+        <SourceStatusBanner errors={sourceErrors} />
+      </div>
 
       {query.isPending ? (
-        <ArticleCardSkeleton />
+        <div className="mt-12">
+          <ArticleCardSkeleton />
+        </div>
       ) : articles.length > 0 ? (
         <>
-          <ArticleGrid articles={articles} />
+          <div className="mt-12">
+            <LeadArticle article={articles[0]} />
+          </div>
+          {articles.length > 1 && (
+            <div className="mt-12">
+              <ArticleGrid articles={articles.slice(1)} />
+            </div>
+          )}
           {query.hasNextPage && (
-            <LoadMoreButton
-              onClick={() => query.fetchNextPage()}
-              loading={query.isFetchingNextPage}
-            />
+            <div className="mt-10">
+              <LoadMoreButton
+                onClick={() => query.fetchNextPage()}
+                loading={query.isFetchingNextPage}
+              />
+            </div>
           )}
         </>
       ) : (
-        <EmptyState
-          title="No articles found"
-          message="Try a different keyword, widen the date range, or check that your API keys are configured in .env."
-        />
+        <div className="mt-12">
+          <EmptyState
+            title="No articles found"
+            message="Try a different keyword, widen the date range, or check that your API keys are configured in .env."
+          />
+        </div>
       )}
     </section>
   )

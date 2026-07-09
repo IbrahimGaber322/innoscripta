@@ -9,3 +9,15 @@ export function formatDate(isoDate: string): string {
   const timestamp = Date.parse(isoDate)
   return Number.isNaN(timestamp) ? isoDate : formatter.format(timestamp)
 }
+
+const fullFormatter = new Intl.DateTimeFormat('en', {
+  weekday: 'long',
+  month: 'long',
+  day: 'numeric',
+  year: 'numeric',
+})
+
+/** Today as "Wednesday, July 9, 2026" for the page masthead. */
+export function formatToday(): string {
+  return fullFormatter.format(new Date())
+}
