@@ -6,7 +6,8 @@ import { isCategory, type Category } from '../domain/category'
 /** Search and filter state for the article list. */
 export interface SearchFilters {
   keyword: string
-  category?: Category
+  /** Selected categories; empty means all. */
+  categories: Category[]
   /** Selected sources; empty means all. */
   sourceIds: SourceId[]
   /** YYYY-MM-DD */
@@ -19,13 +20,12 @@ const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 /** Parses URL params into validated filters; invalid values are dropped. */
 export function parseFilters(params: URLSearchParams): SearchFilters {
-  const category = params.get('category') ?? ''
   const from = params.get('from') ?? ''
   const to = params.get('to') ?? ''
 
   return {
     keyword: params.get('q') ?? '',
-    category: isCategory(category) ? category : undefined,
+    categories: (params.get('categories') ?? '').split(',').filter(isCategory),
     sourceIds: (params.get('sources') ?? '').split(',').filter(isSourceId),
     fromDate: DATE_PATTERN.test(from) ? from : undefined,
     toDate: DATE_PATTERN.test(to) ? to : undefined,
@@ -35,7 +35,9 @@ export function parseFilters(params: URLSearchParams): SearchFilters {
 export function serializeFilters(filters: SearchFilters): URLSearchParams {
   const params = new URLSearchParams()
   if (filters.keyword) params.set('q', filters.keyword)
-  if (filters.category) params.set('category', filters.category)
+  if (filters.categories.length > 0) {
+    params.set('categories', filters.categories.join(','))
+  }
   if (filters.sourceIds.length > 0) params.set('sources', filters.sourceIds.join(','))
   if (filters.fromDate) params.set('from', filters.fromDate)
   if (filters.toDate) params.set('to', filters.toDate)
@@ -67,7 +69,7 @@ export function useSearchFilters() {
 
   const hasActiveFilters =
     filters.keyword !== '' ||
-    filters.category !== undefined ||
+    filters.categories.length > 0 ||
     filters.sourceIds.length > 0 ||
     filters.fromDate !== undefined ||
     filters.toDate !== undefined

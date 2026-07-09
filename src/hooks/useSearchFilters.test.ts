@@ -5,13 +5,13 @@ describe('parseFilters', () => {
   it('parses all supported params', () => {
     const filters = parseFilters(
       new URLSearchParams(
-        'q=climate&category=technology&sources=guardian,nytimes&from=2026-07-01&to=2026-07-09',
+        'q=climate&categories=technology,science&sources=guardian,nytimes&from=2026-07-01&to=2026-07-09',
       ),
     )
 
     expect(filters).toEqual({
       keyword: 'climate',
-      category: 'technology',
+      categories: ['technology', 'science'],
       sourceIds: ['guardian', 'nytimes'],
       fromDate: '2026-07-01',
       toDate: '2026-07-09',
@@ -21,7 +21,7 @@ describe('parseFilters', () => {
   it('returns empty defaults for a blank URL', () => {
     expect(parseFilters(new URLSearchParams())).toEqual({
       keyword: '',
-      category: undefined,
+      categories: [],
       sourceIds: [],
       fromDate: undefined,
       toDate: undefined,
@@ -31,11 +31,11 @@ describe('parseFilters', () => {
   it('drops invalid categories, sources, and dates', () => {
     const filters = parseFilters(
       new URLSearchParams(
-        'category=nonsense&sources=guardian,not-a-source&from=07-01-2026&to=2026-7-9',
+        'categories=technology,nonsense&sources=guardian,not-a-source&from=07-01-2026&to=2026-7-9',
       ),
     )
 
-    expect(filters.category).toBeUndefined()
+    expect(filters.categories).toEqual(['technology'])
     expect(filters.sourceIds).toEqual(['guardian'])
     expect(filters.fromDate).toBeUndefined()
     expect(filters.toDate).toBeUndefined()
@@ -46,7 +46,7 @@ describe('serializeFilters', () => {
   it('round-trips filters through the URL without loss', () => {
     const filters: SearchFilters = {
       keyword: 'ai',
-      category: 'science',
+      categories: ['science', 'health'],
       sourceIds: ['newsapi'],
       fromDate: '2026-06-01',
       toDate: undefined,
@@ -58,7 +58,7 @@ describe('serializeFilters', () => {
   it('omits empty values so the URL stays clean', () => {
     const params = serializeFilters({
       keyword: '',
-      category: undefined,
+      categories: [],
       sourceIds: [],
       fromDate: undefined,
       toDate: undefined,
