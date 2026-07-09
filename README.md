@@ -193,6 +193,6 @@ principle). Dependency inversion is the other pillar: consumers depend on the
   "rate limited" chip for a minute.
 - **Category vocabularies differ per provider** and are mapped to a unified
   set; the mapping is intentionally approximate in places (e.g. Guardian
-  `society` → _Health_, NYT `Culture` desk → _Entertainment_).
+  `society` → _Health_, NYT `Arts` section → _Entertainment_).
 - **NewsAPI date-only filtering** falls back to a broad keyword because its
   `/everything` endpoint requires a query term.

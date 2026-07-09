@@ -4,7 +4,7 @@ import { mapNytArticle } from './mapArticle'
 import { buildNytRequestUrl, NytimesSource } from './nytimesSource'
 import type { NytResponse } from './types'
 
-const { docs } = (fixture as NytResponse).response
+const docs = (fixture as NytResponse).response.docs!
 
 function stubFetch(body: unknown) {
   vi.stubGlobal(
@@ -50,8 +50,18 @@ describe('mapNytArticle', () => {
     expect(mapNytArticle(docs[1]).author).toBeUndefined()
   })
 
-  it('derives the category from the news desk', () => {
+  it('derives the category from the section name', () => {
     expect(mapNytArticle(docs[1]).category).toBe('business')
+  })
+
+  it('maps the U.S. Politics subsection to the politics category', () => {
+    const article = mapNytArticle({
+      ...docs[1],
+      section_name: 'U.S.',
+      subsection_name: 'Politics',
+    })
+
+    expect(article.category).toBe('politics')
   })
 })
 
@@ -73,10 +83,16 @@ describe('buildNytRequestUrl', () => {
     expect(url.searchParams.get('end_date')).toBe('20260709')
   })
 
-  it('filters categories through a news_desk fq query', () => {
+  it('filters categories through a section.name fq query', () => {
     const url = new URL(buildNytRequestUrl({ ...base, category: 'world' }))
 
-    expect(url.searchParams.get('fq')).toBe('news_desk:("Foreign")')
+    expect(url.searchParams.get('fq')).toBe('section.name:"World"')
+  })
+
+  it('filters politics through the U.S. subsection', () => {
+    const url = new URL(buildNytRequestUrl({ ...base, category: 'politics' }))
+
+    expect(url.searchParams.get('fq')).toBe('subsection.name:"Politics"')
   })
 
   it('omits the fq filter for general browsing', () => {
@@ -128,6 +144,19 @@ describe('NytimesSource.fetchArticles', () => {
     const page = await source.fetchArticles({ page: 1, pageSize: 20 })
 
     expect(page.totalResults).toBe(2)
+    expect(page.hasMore).toBe(false)
+  })
+
+  it('treats the null docs returned for zero results as an empty page', async () => {
+    stubFetch({
+      status: 'OK',
+      response: { docs: null, metadata: { hits: 0, offset: 0 } },
+    })
+
+    const page = await source.fetchArticles({ page: 1, pageSize: 20 })
+
+    expect(page.articles).toEqual([])
+    expect(page.totalResults).toBe(0)
     expect(page.hasMore).toBe(false)
   })
 })

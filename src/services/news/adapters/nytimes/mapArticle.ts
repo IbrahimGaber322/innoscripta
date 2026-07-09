@@ -2,16 +2,23 @@ import type { Article } from '../../../../domain/article'
 import type { Category } from '../../../../domain/category'
 import type { NytDoc } from './types'
 
-/** NYT news desks mapped back to the unified category vocabulary. */
-const NEWS_DESK_TO_CATEGORY: Record<string, Category> = {
+/** NYT section names mapped back to the unified category vocabulary. */
+const SECTION_TO_CATEGORY: Record<string, Category> = {
   Business: 'business',
   Technology: 'technology',
   Science: 'science',
   Health: 'health',
   Sports: 'sports',
-  Culture: 'entertainment',
-  Politics: 'politics',
-  Foreign: 'world',
+  Arts: 'entertainment',
+  World: 'world',
+}
+
+function resolveCategory(raw: NytDoc): Category | undefined {
+  // Politics is a subsection of U.S. in the NYT taxonomy.
+  if (raw.subsection_name === 'Politics') {
+    return 'politics'
+  }
+  return raw.section_name ? SECTION_TO_CATEGORY[raw.section_name] : undefined
 }
 
 /**
@@ -44,7 +51,7 @@ export function mapNytArticle(raw: NytDoc, fallbackCategory?: Category): Article
     url: raw.web_url,
     imageUrl: resolveImageUrl(raw.multimedia),
     author: raw.byline?.original?.replace(/^by\s+/i, '').trim() || undefined,
-    category: (raw.news_desk && NEWS_DESK_TO_CATEGORY[raw.news_desk]) || fallbackCategory,
+    category: resolveCategory(raw) ?? fallbackCategory,
     publishedAt: raw.pub_date,
   }
 }

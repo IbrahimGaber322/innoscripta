@@ -29,6 +29,7 @@ export interface NytDoc {
   byline?: { original?: string | null }
   news_desk?: string
   section_name?: string
+  subsection_name?: string
   multimedia?: NytLegacyMultimedia[] | NytModernMultimedia
 }
 
@@ -40,7 +41,8 @@ export interface NytPaginationMeta {
 export interface NytResponse {
   status: string
   response: {
-    docs: NytDoc[]
+    /** The API returns null (not an empty array) for zero results. */
+    docs: NytDoc[] | null
     /** Current schema name for the pagination block. */
     metadata?: NytPaginationMeta
     /** Pre-2024 schema name, kept for compatibility. */

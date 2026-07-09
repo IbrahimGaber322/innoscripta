@@ -13,16 +13,21 @@ export const NYT_PAGE_SIZE = 10
 /** The API rejects page indexes beyond 100. */
 const MAX_PAGE_INDEX = 100
 
-/** Unified categories mapped to NYT news desk names used in fq filters. */
-const CATEGORY_TO_NEWS_DESK: Partial<Record<Category, string>> = {
-  business: 'Business',
-  technology: 'Technology',
-  science: 'Science',
-  health: 'Health',
-  sports: 'Sports',
-  entertainment: 'Culture',
-  politics: 'Politics',
-  world: 'Foreign',
+/**
+ * Unified categories mapped to fq filter queries. The current API filters on
+ * `section.name` (politics is a subsection of U.S.); the legacy
+ * `news_desk`/`section_name` field names silently match nothing.
+ * Values verified against live responses.
+ */
+const CATEGORY_TO_FQ: Partial<Record<Category, string>> = {
+  business: 'section.name:"Business"',
+  technology: 'section.name:"Technology"',
+  science: 'section.name:"Science"',
+  health: 'section.name:"Health"',
+  sports: 'section.name:"Sports"',
+  entertainment: 'section.name:"Arts"',
+  politics: 'subsection.name:"Politics"',
+  world: 'section.name:"World"',
 }
 
 /** YYYY-MM-DD → YYYYMMDD, the format the NYT date params expect. */
@@ -35,11 +40,9 @@ function toNytDate(date: string | undefined): string | undefined {
  * NYT pages are 0-based, so the 1-based domain page is shifted down.
  */
 export function buildNytRequestUrl(query: ArticleQuery): string {
-  const newsDesk = query.category ? CATEGORY_TO_NEWS_DESK[query.category] : undefined
-
   return buildUrl(BASE_URL, {
     q: query.keyword,
-    fq: newsDesk ? `news_desk:("${newsDesk}")` : undefined,
+    fq: query.category ? CATEGORY_TO_FQ[query.category] : undefined,
     begin_date: toNytDate(query.fromDate),
     end_date: toNytDate(query.toDate),
     page: Math.min(query.page - 1, MAX_PAGE_INDEX),
@@ -82,7 +85,8 @@ export class NytimesSource implements NewsSource {
     url.searchParams.set('api-key', this.apiKey ?? '')
 
     const data = await getJson<NytResponse>(url.toString(), { signal })
-    const { docs } = data.response
+    // The API returns docs: null (not an empty array) for zero results.
+    const docs = data.response.docs ?? []
     // The pagination block was renamed meta → metadata in the 2024 schema
     // revision; fall back to the page itself if neither is present.
     const meta = data.response.metadata ?? data.response.meta
