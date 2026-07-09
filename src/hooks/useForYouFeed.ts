@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { usePreferences } from '../components/preferences/usePreferences'
+import { usePreferences } from './usePreferences'
 import type { Article } from '../domain/article'
 import type { Category } from '../domain/category'
 import { fetchAggregated, mergeAggregatedPages } from '../services/news/aggregator'

@@ -1,5 +1,5 @@
 import { createContext } from 'react'
-import type { Preferences } from '../../domain/preferences'
+import type { Preferences } from '../domain/preferences'
 
 export interface PreferencesContextValue {
   preferences: Preferences

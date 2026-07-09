@@ -1,7 +1,7 @@
 import { useCallback, useState, type ReactNode } from 'react'
-import type { Preferences } from '../../domain/preferences'
+import type { Preferences } from '../domain/preferences'
 import { PreferencesContext } from './preferencesContext'
-import { loadPreferences, savePreferences } from './storage'
+import { loadPreferences, savePreferences } from '../services/preferences/storage'
 
 /** Holds user preferences in state and mirrors every change to localStorage. */
 export function PreferencesProvider({ children }: { children: ReactNode }) {

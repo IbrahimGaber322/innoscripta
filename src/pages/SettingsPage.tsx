@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { usePreferences } from '../components/preferences/usePreferences'
+import { usePreferences } from '../hooks/usePreferences'
 import { CheckboxChip } from '../components/ui/CheckboxChip'
 import type { SourceId } from '../domain/article'
 import { CATEGORIES, CATEGORY_LABELS, type Category } from '../domain/category'
