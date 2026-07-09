@@ -111,6 +111,16 @@ function AuthorTagInput({
 export function SettingsPage() {
   const { preferences, updatePreferences } = usePreferences()
 
+  // Categories at least one effective source can serve — picking anything
+  // else would guarantee an empty feed (e.g. NewsAPI has no politics/world).
+  const effectiveSources =
+    preferences.sources.length === 0
+      ? ALL_SOURCES
+      : ALL_SOURCES.filter((source) => preferences.sources.includes(source.id))
+  const supportedCategories = new Set(
+    effectiveSources.flatMap((source) => source.capabilities.categories),
+  )
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
@@ -143,19 +153,29 @@ export function SettingsPage() {
         description="Your feed pulls the latest articles from each selected category. None selected means general news."
       >
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((category) => (
-            <CheckboxChip
-              key={category}
-              label={CATEGORY_LABELS[category]}
-              checked={preferences.categories.includes(category)}
-              onToggle={() =>
-                updatePreferences({
-                  categories: toggleItem<Category>(preferences.categories, category),
-                })
-              }
-            />
-          ))}
+          {CATEGORIES.map((category) => {
+            const supported = supportedCategories.has(category)
+            return (
+              <CheckboxChip
+                key={category}
+                label={CATEGORY_LABELS[category]}
+                checked={preferences.categories.includes(category)}
+                disabled={!supported}
+                disabledReason="None of your preferred sources supports this category"
+                onToggle={() =>
+                  updatePreferences({
+                    categories: toggleItem<Category>(preferences.categories, category),
+                  })
+                }
+              />
+            )
+          })}
         </div>
+        {CATEGORIES.some((category) => !supportedCategories.has(category)) && (
+          <p className="mt-3 text-xs text-slate-500">
+            Grayed-out categories aren't offered by your preferred sources.
+          </p>
+        )}
       </SectionCard>
 
       <SectionCard

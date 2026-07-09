@@ -47,10 +47,18 @@ export function useForYouFeed(): ForYouFeed {
     [preferences.sources],
   )
 
+  // Drop categories none of the effective sources can serve (e.g. politics
+  // with NewsAPI only); an unsupported-only selection falls back to latest
+  // news instead of a guaranteed-empty feed.
+  const supportedCategories = new Set(
+    sources.flatMap((source) => source.capabilities.categories),
+  )
+  const preferred = preferences.categories.filter((category) =>
+    supportedCategories.has(category),
+  )
+
   const categories: (Category | undefined)[] =
-    preferences.categories.length > 0
-      ? preferences.categories.slice(0, MAX_FEED_CATEGORIES)
-      : [undefined]
+    preferred.length > 0 ? preferred.slice(0, MAX_FEED_CATEGORIES) : [undefined]
 
   const results = useQueries({
     queries: categories.map((category) => ({
