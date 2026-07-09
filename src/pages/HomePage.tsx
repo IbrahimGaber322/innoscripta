@@ -51,8 +51,13 @@ export function HomePage() {
   )
   const earlier = pool.filter((article) => !sectionedIds.has(article.id))
 
-  // The dark "Top headlines" box only appears on the browse front page.
-  const topHeadlines = useTopHeadlines(showPackage).data ?? []
+  // The dark "Top headlines" box only appears on the browse front page. It's a
+  // separate NewsAPI query, so drop any story already shown in the feed above
+  // (matched by URL, since the same story can carry a different id per source).
+  const shownUrls = new Set(articles.map((article) => article.url.split('?')[0]))
+  const topHeadlines = (useTopHeadlines(showPackage).data ?? []).filter(
+    (article) => !shownUrls.has(article.url.split('?')[0]),
+  )
 
   return (
     <section>
@@ -142,7 +147,7 @@ export function HomePage() {
         <div className="mt-12">
           <EmptyState
             title="No articles found"
-            message="Try a different keyword, widen the date range, or check that your API keys are configured in .env."
+            message="Try a different keyword, widen the date range."
           />
         </div>
       )}

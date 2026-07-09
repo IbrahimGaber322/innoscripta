@@ -18,7 +18,12 @@ export function useRelatedArticles(article: Article | undefined, limit = 2) {
         ALL_SOURCES,
         signal,
       )
-      return page.articles.filter((entry) => entry.id !== article!.id).slice(0, limit)
+      // Match by URL, not id: the same story carries a different id per
+      // source, so an id check would let a cross-source duplicate slip in.
+      const currentUrl = article!.url.split('?')[0]
+      return page.articles
+        .filter((entry) => entry.url.split('?')[0] !== currentUrl)
+        .slice(0, limit)
     },
   })
 }
