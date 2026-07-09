@@ -49,4 +49,20 @@ describe('ArticleCard', () => {
     expect(screen.getByRole('link', { name: 'Minimal article' })).toBeInTheDocument()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
+
+  it('badges NewsAPI articles with the aggregating source and the outlet', () => {
+    const viaNewsApi: Article = {
+      id: 'newsapi:outlet',
+      sourceId: 'newsapi',
+      sourceName: 'TechCrunch',
+      title: 'Outlet-branded article',
+      url: 'https://example.com/outlet',
+      publishedAt: '2026-07-01T00:00:00Z',
+    }
+
+    render(<ArticleCard article={viaNewsApi} />)
+
+    expect(screen.getByText('NewsAPI')).toBeInTheDocument()
+    expect(screen.getByText('TechCrunch')).toBeInTheDocument()
+  })
 })

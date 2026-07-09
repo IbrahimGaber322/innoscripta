@@ -1,4 +1,4 @@
-import type { Article } from '../../domain/article'
+import { SOURCE_LABELS, type Article } from '../../domain/article'
 import { CATEGORY_LABELS } from '../../domain/category'
 import { formatDate } from '../../lib/formatDate'
 
@@ -7,6 +7,11 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
+  const sourceLabel = SOURCE_LABELS[article.sourceId]
+  // For NewsAPI the article's own source is the underlying outlet
+  // (e.g. "TechCrunch"); show it alongside the aggregating source.
+  const outlet = article.sourceName !== sourceLabel ? article.sourceName : undefined
+
   return (
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
       {article.imageUrl && (
@@ -24,8 +29,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
       <div className="flex flex-1 flex-col gap-2 p-4">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-800">
-            {article.sourceName}
+            {sourceLabel}
           </span>
+          {outlet && (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+              {outlet}
+            </span>
+          )}
           {article.category && (
             <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
               {CATEGORY_LABELS[article.category]}

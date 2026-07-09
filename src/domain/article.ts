@@ -9,6 +9,17 @@ export function isSourceId(value: string): value is SourceId {
   return (SOURCE_IDS as readonly string[]).includes(value)
 }
 
+/**
+ * Display names for the aggregating sources — the things a user selects in
+ * filters and preferences. Distinct from Article.sourceName, which for
+ * NewsAPI is the underlying outlet (e.g. "TechCrunch").
+ */
+export const SOURCE_LABELS: Record<SourceId, string> = {
+  newsapi: 'NewsAPI',
+  guardian: 'The Guardian',
+  nytimes: 'The New York Times',
+}
+
 /** A news article normalized to a single shape, regardless of provider. */
 export interface Article {
   /** Globally unique: `${sourceId}:${provider id or url}`. */
