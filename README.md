@@ -14,18 +14,24 @@ in a clean, mobile-friendly interface.
 
 Additional behavior worth knowing about:
 
-- **Editorial front page** — browsing (no keyword) leads with a top-stories
-  package: a large lead story beside a rail of the latest headlines, then the
-  rest of the feed below. An active search collapses to a flat, relevance-first
+- **Editorial front page** — browsing (no keyword) is laid out like a
+  newspaper: a lead-story package (a large story beside a rail of latest
+  headlines), then per-category sections under coloured rules, a dark "Top
+  headlines" box (the day's biggest stories from NewsAPI), and the rest under
+  "Earlier this week". An active search collapses to a flat, relevance-first
   list.
+- **Personalized For You** — a time-of-day greeting, persona chips showing
+  what the feed is built from, a highlighted top pick, a "Because you follow X"
+  topic spotlight, and per-source digests — all shaped by your preferences.
 - **Infinite scroll** — both the Home and For You feeds load more as you
   approach the bottom (an `IntersectionObserver` sentinel drives
   `fetchNextPage`), with a spinner while loading and an "all caught up" divider
   at the end. No "load more" button.
-- **In-app reader** — clicking an article opens a reader page. Guardian
-  stories render their full body (fetched by content id and sanitized with
-  DOMPurify); the other providers' APIs only share summaries, so those pages
-  show everything available plus a link to the original story.
+- **In-app reader** — clicking an article opens a centred reader page with a
+  byline avatar, a wide figure, and a "more like this" rail of same-topic
+  stories. Guardian articles render their full body (fetched by content id and
+  sanitized with DOMPurify); the other providers' APIs only share summaries, so
+  those pages show everything available plus a link to the original story.
 - **Graceful degradation** — every source is fetched independently
   (`Promise.allSettled`). A provider that is down, rate limited, or missing an
   API key becomes a warning chip; the rest of the page still renders.
