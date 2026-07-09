@@ -6,11 +6,11 @@ in a clean, mobile-friendly interface.
 
 ## Features
 
-| Requirement                                                                     | Where it lives                                                                                                                                                                           |
-| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Search & filtering** — keyword search with date, category, and source filters | Home page. Categories and sources are multi-select pills; filter state lives in the URL, so searches are shareable, survive refreshes, and the back button walks through filter history. |
-| **Personalized feed** — preferred sources, categories, and followed authors     | _For You_ page, configured on the _Settings_ page. Preferences persist in `localStorage`. Articles by followed authors are pinned to the top of the feed.                                |
-| **Mobile-responsive design**                                                    | Tailwind CSS throughout: the article grid collapses 3 → 2 → 1 columns and the header switches to a hamburger menu on small screens.                                                      |
+| Requirement                                                                     | Where it lives                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Search & filtering** — keyword search with date, category, and source filters | Home page. Categories are multi-select tabs; sources and dates live in an expandable Filters panel. Filter state lives in the URL, so searches are shareable, survive refreshes, and the back button walks through filter history. |
+| **Personalized feed** — preferred sources, categories, and followed authors     | _For You_ page, configured on the _Settings_ page. Preferences persist in `localStorage`. Articles by followed authors are pinned to the top of the feed.                                                                          |
+| **Mobile-responsive design**                                                    | Tailwind CSS throughout: the article grid collapses 3 → 2 → 1 columns and the header switches to a hamburger menu on small screens.                                                                                                |
 
 Additional behavior worth knowing about:
 
