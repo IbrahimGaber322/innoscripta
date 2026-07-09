@@ -2,13 +2,14 @@ import { useState } from 'react'
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
 import { EmptyState } from '../components/articles/EmptyState'
+import { FeedFooter } from '../components/articles/FeedFooter'
 import { LeadArticle } from '../components/articles/LeadArticle'
-import { LoadMoreButton } from '../components/articles/LoadMoreButton'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
 import { CategoryTabs } from '../components/search/CategoryTabs'
 import { FiltersPanel } from '../components/search/FiltersPanel'
 import { SearchBar } from '../components/search/SearchBar'
 import { useArticleSearch } from '../hooks/useArticleSearch'
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { useSearchFilters } from '../hooks/useSearchFilters'
 import { formatToday } from '../lib/formatDate'
 
@@ -26,6 +27,10 @@ export function HomePage() {
   // Per-source skip/failure status only changes between filter changes,
   // so the first page's errors describe the whole result set.
   const sourceErrors = query.data?.pages[0]?.errors ?? []
+
+  const sentinelRef = useInfiniteScroll<HTMLDivElement>(() => query.fetchNextPage(), {
+    enabled: query.hasNextPage && !query.isFetchingNextPage,
+  })
 
   return (
     <section>
@@ -76,14 +81,14 @@ export function HomePage() {
               <ArticleGrid articles={articles.slice(1)} />
             </div>
           )}
-          {query.hasNextPage && (
-            <div className="mt-10">
-              <LoadMoreButton
-                onClick={() => query.fetchNextPage()}
-                loading={query.isFetchingNextPage}
-              />
-            </div>
-          )}
+          <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+          <FeedFooter
+            isLoadingMore={query.isFetchingNextPage}
+            hasMore={query.hasNextPage}
+            hasItems={articles.length > 0}
+            loadingLabel="Loading more stories"
+            doneLabel="You're all caught up"
+          />
         </>
       ) : (
         <div className="mt-12">
