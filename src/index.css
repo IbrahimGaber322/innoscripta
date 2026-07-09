@@ -17,3 +17,12 @@
 body {
   @apply bg-paper text-ink font-sans antialiased;
 }
+
+/* Native buttons default to an arrow cursor; make every enabled control and
+   clickable role show the pointer. */
+button:not(:disabled),
+[role='button']:not([aria-disabled='true']),
+label:has(> input[type='checkbox']),
+summary {
+  cursor: pointer;
+}
