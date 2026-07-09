@@ -11,12 +11,37 @@ import { TopStories } from '../components/articles/TopStories'
 import { CategoryTabs } from '../components/search/CategoryTabs'
 import { FiltersPanel } from '../components/search/FiltersPanel'
 import { SearchBar } from '../components/search/SearchBar'
+import { CATEGORY_LABELS } from '../domain/category'
 import { useArticleSearch } from '../hooks/useArticleSearch'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
-import { useSearchFilters } from '../hooks/useSearchFilters'
+import { useSearchFilters, type SearchFilters } from '../hooks/useSearchFilters'
 import { useTopHeadlines } from '../hooks/useTopHeadlines'
 import { buildCategorySections } from '../lib/categorySections'
-import { formatToday } from '../lib/formatDate'
+import { formatDate, formatToday } from '../lib/formatDate'
+
+/** A heading that reflects the active filters, so it's never misleading. */
+function buildHeading(filters: SearchFilters): string {
+  if (filters.keyword) return `Results for “${filters.keyword}”`
+
+  const { fromDate, toDate, categories, sourceIds } = filters
+  const subject =
+    categories.length > 0
+      ? categories.map((category) => CATEGORY_LABELS[category]).join(' · ')
+      : 'News'
+
+  let dateText = ''
+  if (fromDate && toDate) {
+    dateText = ` from ${formatDate(fromDate)} – ${formatDate(toDate)}`
+  } else if (fromDate) {
+    dateText = ` since ${formatDate(fromDate)}`
+  } else if (toDate) {
+    dateText = ` up to ${formatDate(toDate)}`
+  }
+
+  if (categories.length > 0 || fromDate || toDate) return subject + dateText
+  if (sourceIds.length > 0) return 'Filtered news'
+  return 'Latest news'
+}
 
 export function HomePage() {
   const { filters, updateFilters, clearFilters, hasActiveFilters } = useSearchFilters()
@@ -37,10 +62,17 @@ export function HomePage() {
     enabled: query.hasNextPage && !query.isFetchingNextPage,
   })
 
-  // Browsing the front page gets the magazine layout: a lead-story package,
-  // then category sections, then everything else. An active keyword search
-  // gets a flat, relevance-first list instead.
-  const showPackage = !filters.keyword && articles.length >= 4
+  // The magazine layout (lead package, category sections, "top headlines",
+  // "earlier this week") only makes sense for the unfiltered front page — any
+  // active filter collapses to a flat, filter-appropriate list.
+  const hasAnyFilter =
+    Boolean(filters.keyword) ||
+    filters.categories.length > 0 ||
+    filters.sourceIds.length > 0 ||
+    Boolean(filters.fromDate) ||
+    Boolean(filters.toDate)
+  const showPackage = !hasAnyFilter && articles.length >= 4
+  const heading = buildHeading(filters)
 
   // Split the browse feed into the package, the category sections (a glimpse
   // of each topic), and the remainder shown under "Earlier this week".
@@ -63,7 +95,7 @@ export function HomePage() {
     <section>
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
-          {filters.keyword ? `Results for “${filters.keyword}”` : 'Latest news'}
+          {heading}
         </h1>
         <div className="text-[13px] text-stone-500">{formatToday()}</div>
       </div>
