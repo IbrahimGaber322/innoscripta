@@ -134,10 +134,16 @@ npm run build         # type-check + production build
   - `aggregator.ts` — fans a query out to eligible sources, merges the
     results, and turns failures into per-source errors.
   - `registry.ts` — the list of installed sources.
+- **`src/services/preferences/`** — validated `localStorage` persistence for
+  user preferences.
+- **`src/context/`** — the `PreferencesProvider` React context that holds
+  preference state and mirrors changes to storage.
 - **`src/hooks/`** — `useSearchFilters` (URL ↔ filter state),
   `useArticleSearch` (infinite query over the aggregator), `useForYouFeed`
-  (per-category queries shaped by preferences).
-- **`src/components/`** / **`src/pages/`** — presentational layer.
+  (per-category queries shaped by preferences), `usePreferences`.
+- **`src/components/`** / **`src/pages/`** — presentational layer only.
+- **`src/test/`** — all unit tests (mirroring the `src` layout via the `@`
+  import alias) plus realistic provider response fixtures.
 
 **Adding a fourth source is one adapter folder plus one line in
 `registry.ts`** — no changes to the aggregator, hooks, or UI (open–closed
