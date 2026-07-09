@@ -1,4 +1,5 @@
 import type { Article } from '../../domain/article'
+import { ArticleImage } from './ArticleImage'
 import { ArticleByline, ArticleKicker } from './ArticleMeta'
 
 interface ArticleCardProps {
@@ -8,19 +9,7 @@ interface ArticleCardProps {
 export function ArticleCard({ article }: ArticleCardProps) {
   return (
     <article className="group flex h-full flex-col">
-      {article.imageUrl && (
-        <div className="aspect-3/2 overflow-hidden rounded bg-stone-200">
-          <img
-            src={article.imageUrl}
-            alt=""
-            loading="lazy"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-            onError={(event) => {
-              event.currentTarget.parentElement!.style.display = 'none'
-            }}
-          />
-        </div>
-      )}
+      <ArticleImage article={article} />
 
       <div className="mt-4">
         <ArticleKicker article={article} />

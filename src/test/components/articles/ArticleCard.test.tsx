@@ -47,7 +47,9 @@ describe('ArticleCard', () => {
     render(<ArticleCard article={minimal} />)
 
     expect(screen.getByRole('link', { name: 'Minimal article' })).toBeInTheDocument()
+    // No provider image: a branded placeholder keeps the grid aligned.
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    expect(screen.getByText('N')).toBeInTheDocument()
   })
 
   it('badges NewsAPI articles with the aggregating source and the outlet', () => {

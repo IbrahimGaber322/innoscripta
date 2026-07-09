@@ -1,4 +1,5 @@
 import type { Article } from '../../domain/article'
+import { ArticleImage } from './ArticleImage'
 import { ArticleByline, ArticleKicker } from './ArticleMeta'
 
 interface LeadArticleProps {
@@ -9,18 +10,7 @@ interface LeadArticleProps {
 export function LeadArticle({ article }: LeadArticleProps) {
   return (
     <article className="group grid items-center gap-8 border-b border-stone-200 pb-12 md:grid-cols-[7fr_5fr] md:gap-10">
-      {article.imageUrl && (
-        <div className="aspect-16/10 overflow-hidden rounded bg-stone-200">
-          <img
-            src={article.imageUrl}
-            alt=""
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-            onError={(event) => {
-              event.currentTarget.parentElement!.style.display = 'none'
-            }}
-          />
-        </div>
-      )}
+      <ArticleImage article={article} aspectClass="aspect-16/10" />
 
       <div>
         <ArticleKicker article={article} />
