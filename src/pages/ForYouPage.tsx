@@ -101,7 +101,7 @@ export function ForYouPage() {
         <div className="mt-12">
           <EmptyState
             title="Nothing to show yet"
-            message="No articles matched your preferences. Try adding more categories or sources in Settings, and make sure your API keys are configured."
+            message="No articles matched your preferences. Sources cover different topics — NewsAPI has no Politics or World, for example — so a narrow source + category combination can come up empty. Widen your picks in Settings, or check that your API keys are configured."
           >
             <Link
               to="/settings"

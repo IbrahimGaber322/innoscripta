@@ -1,5 +1,9 @@
 import type { SourceId } from '../domain/article'
 
+// SECURITY: every VITE_* variable is inlined into the client bundle at build
+// time, so these keys are visible to anyone who loads the app. That is fine for
+// a local/free-tier take-home; a real deployment must proxy the providers
+// server-side and keep the keys off the client (see README, "Known limitations").
 const API_KEYS: Record<SourceId, string | undefined> = {
   newsapi: import.meta.env.VITE_NEWSAPI_API_KEY,
   guardian: import.meta.env.VITE_GUARDIAN_API_KEY,

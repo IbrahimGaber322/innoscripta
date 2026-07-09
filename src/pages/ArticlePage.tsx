@@ -49,16 +49,27 @@ function BodySkeleton() {
   )
 }
 
-function ContinueReading({ article }: { article: Article }) {
+function ContinueReading({
+  article,
+  fullBody,
+}: {
+  article: Article
+  /** True when the full article body is rendered above (Guardian only). */
+  fullBody: boolean
+}) {
   const sourceLabel = SOURCE_LABELS[article.sourceId]
   return (
     <div className="bg-panel mt-14 flex flex-wrap items-center justify-between gap-6 rounded-lg p-8">
       <div>
         <div className="font-serif text-xl font-medium">
-          Continue reading at {sourceLabel}
+          {fullBody
+            ? `Read more at ${sourceLabel}`
+            : `Continue reading at ${sourceLabel}`}
         </div>
         <p className="mt-1 text-[13.5px] text-stone-500">
-          NewsHub links you to the original reporting — no rehosting, no paywall tricks.
+          {fullBody
+            ? 'You’ve read the full story here. Visit the original for comments and related coverage.'
+            : `${sourceLabel} shares only a summary through its API — open the original for the full story.`}
         </p>
       </div>
       <a
@@ -272,7 +283,7 @@ export function ArticlePage() {
           )
         )}
 
-        <ContinueReading article={article} />
+        <ContinueReading article={article} fullBody={Boolean(bodyHtml)} />
       </div>
 
       {related.length > 0 && <MoreLikeThis articles={related} />}

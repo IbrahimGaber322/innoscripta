@@ -181,7 +181,7 @@ export function SettingsPage() {
 
         <PreferenceSection
           title="Followed authors"
-          description="Articles by these authors are pinned to the top of your feed."
+          description="Articles by these authors are pinned to the top of your feed. Enter a full name — matching is by whole word, so “Alex Hern” won’t catch “Hernandez”."
         >
           <AuthorTagInput
             authors={preferences.authors}
