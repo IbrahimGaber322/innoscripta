@@ -2,11 +2,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { PreferencesProvider } from '../context/PreferencesProvider'
-import { PREFERENCES_STORAGE_KEY } from '../services/preferences/storage'
-import type { Article, ArticlePage } from '../domain/article'
-import type { NewsSource } from '../services/news/NewsSource'
-import { ForYouPage } from './ForYouPage'
+import { PreferencesProvider } from '@/context/PreferencesProvider'
+import { PREFERENCES_STORAGE_KEY } from '@/services/preferences/storage'
+import type { Article, ArticlePage } from '@/domain/article'
+import type { NewsSource } from '@/services/news/NewsSource'
+import { ForYouPage } from '@/pages/ForYouPage'
 
 function fakeArticle(id: string, sourceId: Article['sourceId'], title: string): Article {
   return {
@@ -34,7 +34,7 @@ const guardianFetch = vi.fn((): Promise<ArticlePage> =>
   }),
 )
 
-vi.mock('../services/news/registry', () => {
+vi.mock('@/services/news/registry', () => {
   const makeFake = (
     id: 'newsapi' | 'guardian',
     fetchArticles: () => Promise<ArticlePage>,

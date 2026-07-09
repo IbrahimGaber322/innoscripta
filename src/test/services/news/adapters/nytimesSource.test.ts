@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import fixture from '../../../../test/fixtures/nytimes.articlesearch.json'
-import { mapNytArticle } from './mapArticle'
-import { buildNytRequestUrl, NytimesSource } from './nytimesSource'
-import type { NytResponse } from './types'
+import fixture from '@/test/fixtures/nytimes.articlesearch.json'
+import { mapNytArticle } from '@/services/news/adapters/nytimes/mapArticle'
+import {
+  buildNytRequestUrl,
+  NytimesSource,
+} from '@/services/news/adapters/nytimes/nytimesSource'
+import type { NytResponse } from '@/services/news/adapters/nytimes/types'
 
 const docs = (fixture as NytResponse).response.docs!
 

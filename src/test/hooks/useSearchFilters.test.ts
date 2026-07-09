@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { parseFilters, serializeFilters, type SearchFilters } from './useSearchFilters'
+import {
+  parseFilters,
+  serializeFilters,
+  type SearchFilters,
+} from '@/hooks/useSearchFilters'
 
 describe('parseFilters', () => {
   it('parses all supported params', () => {

@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { DEFAULT_PREFERENCES } from '../../domain/preferences'
-import { loadPreferences, PREFERENCES_STORAGE_KEY, savePreferences } from './storage'
+import { DEFAULT_PREFERENCES } from '@/domain/preferences'
+import {
+  loadPreferences,
+  PREFERENCES_STORAGE_KEY,
+  savePreferences,
+} from '@/services/preferences/storage'
 
 describe('preferences storage', () => {
   beforeEach(() => {

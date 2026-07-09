@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import fixture from '../../../../test/fixtures/guardian.search.json'
-import { buildGuardianRequestUrl } from './guardianSource'
-import { mapGuardianArticle } from './mapArticle'
-import type { GuardianResponse } from './types'
+import fixture from '@/test/fixtures/guardian.search.json'
+import { buildGuardianRequestUrl } from '@/services/news/adapters/guardian/guardianSource'
+import { mapGuardianArticle } from '@/services/news/adapters/guardian/mapArticle'
+import type { GuardianResponse } from '@/services/news/adapters/guardian/types'
 
 const { results } = (fixture as GuardianResponse).response
 

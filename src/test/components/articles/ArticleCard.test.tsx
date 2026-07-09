@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import type { Article } from '../../domain/article'
-import { ArticleCard } from './ArticleCard'
+import type { Article } from '@/domain/article'
+import { ArticleCard } from '@/components/articles/ArticleCard'
 
 const article: Article = {
   id: 'guardian:test-article',

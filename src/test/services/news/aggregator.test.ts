@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import type { Article, ArticlePage, ArticleQuery, SourceId } from '../../domain/article'
-import { fetchAggregated, mergeAggregatedPages } from './aggregator'
-import { ApiError } from './http'
-import type { NewsSource } from './NewsSource'
+import type { Article, ArticlePage, ArticleQuery, SourceId } from '@/domain/article'
+import { fetchAggregated, mergeAggregatedPages } from '@/services/news/aggregator'
+import { ApiError } from '@/services/news/http'
+import type { NewsSource } from '@/services/news/NewsSource'
 
 const QUERY: ArticleQuery = { page: 1, pageSize: 20 }
 

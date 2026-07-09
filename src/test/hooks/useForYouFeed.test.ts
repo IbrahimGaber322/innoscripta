@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Article } from '../domain/article'
-import { matchesFollowedAuthor } from './useForYouFeed'
+import type { Article } from '@/domain/article'
+import { matchesFollowedAuthor } from '@/hooks/useForYouFeed'
 
 function articleBy(author?: string): Article {
   return {

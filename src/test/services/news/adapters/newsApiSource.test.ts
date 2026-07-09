@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import fixture from '../../../../test/fixtures/newsapi.everything.json'
-import { mapNewsApiArticle } from './mapArticle'
-import { buildNewsApiRequestUrl } from './newsApiSource'
-import type { NewsApiResponse } from './types'
+import fixture from '@/test/fixtures/newsapi.everything.json'
+import { mapNewsApiArticle } from '@/services/news/adapters/newsapi/mapArticle'
+import { buildNewsApiRequestUrl } from '@/services/news/adapters/newsapi/newsApiSource'
+import type { NewsApiResponse } from '@/services/news/adapters/newsapi/types'
 
 const response = fixture as NewsApiResponse
 
