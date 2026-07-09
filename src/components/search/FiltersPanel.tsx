@@ -2,6 +2,7 @@ import type { SearchFilters } from '../../hooks/useSearchFilters'
 import { todayISO } from '../../lib/formatDate'
 import { ALL_SOURCES } from '../../services/news/registry'
 import { CheckboxChip } from '../ui/CheckboxChip'
+import { DatePicker } from './DatePicker'
 
 interface FiltersPanelProps {
   filters: SearchFilters
@@ -11,9 +12,6 @@ interface FiltersPanelProps {
 }
 
 const GROUP_LABEL = 'text-[11px] font-semibold tracking-widest uppercase text-stone-400'
-
-const DATE_FIELD =
-  'rounded-lg border border-stone-300 bg-paper px-3 py-1.5 text-[13px] text-stone-700 shadow-sm transition-colors [color-scheme:light] focus:border-ink focus:ring-2 focus:ring-stone-200 focus:outline-none'
 
 /** Expandable panel with the source and date refinements. */
 export function FiltersPanel({
@@ -32,12 +30,6 @@ export function FiltersPanel({
     })
   }
 
-  // Never accept a date past today, even if one is typed into the field.
-  function setDate(key: 'fromDate' | 'toDate', value: string) {
-    if (value && value > today) return
-    onChange({ [key]: value || undefined })
-  }
-
   return (
     <div className="bg-panel mt-5 flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg px-7 py-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -54,29 +46,28 @@ export function FiltersPanel({
 
       <div className="flex flex-wrap items-center gap-2.5">
         <span className={GROUP_LABEL}>Dates</span>
-        <label className="flex items-center gap-2 text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
+        <span className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
           From
-          <input
-            type="date"
-            aria-label="From date"
-            value={filters.fromDate ?? ''}
-            max={filters.toDate && filters.toDate < today ? filters.toDate : today}
-            onChange={(event) => setDate('fromDate', event.target.value)}
-            className={DATE_FIELD}
-          />
-        </label>
-        <label className="flex items-center gap-2 text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
+        </span>
+        <DatePicker
+          ariaLabel="From date"
+          placeholder="Any date"
+          value={filters.fromDate}
+          // Never past today, and never after the "to" date.
+          max={filters.toDate && filters.toDate < today ? filters.toDate : today}
+          onChange={(value) => onChange({ fromDate: value })}
+        />
+        <span className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
           To
-          <input
-            type="date"
-            aria-label="To date"
-            value={filters.toDate ?? ''}
-            min={filters.fromDate}
-            max={today}
-            onChange={(event) => setDate('toDate', event.target.value)}
-            className={DATE_FIELD}
-          />
-        </label>
+        </span>
+        <DatePicker
+          ariaLabel="To date"
+          placeholder="Any date"
+          value={filters.toDate}
+          min={filters.fromDate}
+          max={today}
+          onChange={(value) => onChange({ toDate: value })}
+        />
       </div>
 
       {hasActiveFilters && (
