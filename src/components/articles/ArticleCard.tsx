@@ -6,26 +6,39 @@ import { ArticleByline, ArticleKicker } from './ArticleMeta'
 
 interface ArticleCardProps {
   article: Article
+  /** Section accent colour applied to the category kicker and title hover. */
+  accentColor?: string
 }
 
-export function ArticleCard({ article }: ArticleCardProps) {
+export function ArticleCard({ article, accentColor }: ArticleCardProps) {
   const readerPath = articlePath(article)
 
   return (
-    <article className="group flex h-full flex-col">
+    <article
+      className="group flex h-full flex-col"
+      style={
+        accentColor
+          ? ({ '--card-accent': accentColor } as React.CSSProperties)
+          : undefined
+      }
+    >
       <Link to={readerPath} state={{ article }} tabIndex={-1} aria-hidden="true">
         <ArticleImage article={article} />
       </Link>
 
       <div className="mt-4">
-        <ArticleKicker article={article} />
+        <ArticleKicker article={article} accentColor={accentColor} />
       </div>
 
       <h3 className="mt-2 font-serif text-[21px] leading-tight font-medium">
         <Link
           to={readerPath}
           state={{ article }}
-          className="hover:text-accent transition-colors"
+          className={
+            accentColor
+              ? 'transition-colors hover:text-(--card-accent)'
+              : 'hover:text-accent transition-colors'
+          }
         >
           {article.title}
         </Link>

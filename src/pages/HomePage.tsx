@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
+import { CategorySection } from '../components/articles/CategorySection'
 import { EmptyState } from '../components/articles/EmptyState'
 import { FeedFooter } from '../components/articles/FeedFooter'
 import { LeadArticle } from '../components/articles/LeadArticle'
@@ -12,6 +13,7 @@ import { SearchBar } from '../components/search/SearchBar'
 import { useArticleSearch } from '../hooks/useArticleSearch'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { useSearchFilters } from '../hooks/useSearchFilters'
+import { buildCategorySections } from '../lib/categorySections'
 import { formatToday } from '../lib/formatDate'
 
 export function HomePage() {
@@ -33,10 +35,19 @@ export function HomePage() {
     enabled: query.hasNextPage && !query.isFetchingNextPage,
   })
 
-  // Browsing the front page gets the lead-story package; an active keyword
-  // search gets a flat, relevance-first list instead.
+  // Browsing the front page gets the magazine layout: a lead-story package,
+  // then category sections, then everything else. An active keyword search
+  // gets a flat, relevance-first list instead.
   const showPackage = !filters.keyword && articles.length >= 4
-  const gridArticles = showPackage ? articles.slice(5) : articles.slice(1)
+
+  // Split the browse feed into the package, the category sections (a glimpse
+  // of each topic), and the remainder shown under "Earlier this week".
+  const pool = articles.slice(5)
+  const sections = showPackage ? buildCategorySections(pool) : []
+  const sectionedIds = new Set(
+    sections.flatMap((section) => section.articles.map((article) => article.id)),
+  )
+  const earlier = pool.filter((article) => !sectionedIds.has(article.id))
 
   return (
     <section>
@@ -79,22 +90,38 @@ export function HomePage() {
         </div>
       ) : articles.length > 0 ? (
         <>
-          <div className="mt-12">
-            {showPackage ? (
-              <TopStories lead={articles[0]} latest={articles.slice(1, 5)} />
-            ) : (
-              <LeadArticle article={articles[0]} />
-            )}
-          </div>
-          {gridArticles.length > 0 && (
-            <section className="mt-14">
-              {showPackage && (
-                <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
-                  More stories
-                </h2>
+          {showPackage ? (
+            <>
+              <div className="mt-12">
+                <TopStories lead={articles[0]} latest={articles.slice(1, 5)} />
+              </div>
+              {sections.map((section) => (
+                <CategorySection
+                  key={section.category}
+                  category={section.category}
+                  articles={section.articles}
+                />
+              ))}
+              {earlier.length > 0 && (
+                <section className="mt-14">
+                  <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
+                    Earlier this week
+                  </h2>
+                  <ArticleGrid articles={earlier} />
+                </section>
               )}
-              <ArticleGrid articles={gridArticles} />
-            </section>
+            </>
+          ) : (
+            <>
+              <div className="mt-12">
+                <LeadArticle article={articles[0]} />
+              </div>
+              {articles.length > 1 && (
+                <section className="mt-14">
+                  <ArticleGrid articles={articles.slice(1)} />
+                </section>
+              )}
+            </>
           )}
           <div ref={sentinelRef} className="h-px" aria-hidden="true" />
           <FeedFooter

@@ -3,7 +3,14 @@ import { CATEGORY_LABELS } from '../../domain/category'
 import { formatDate } from '../../lib/formatDate'
 
 /** Uppercase source/category line shown above article titles. */
-export function ArticleKicker({ article }: { article: Article }) {
+export function ArticleKicker({
+  article,
+  accentColor,
+}: {
+  article: Article
+  /** Overrides the category label colour (e.g. a section's accent). */
+  accentColor?: string
+}) {
   const sourceLabel = SOURCE_LABELS[article.sourceId]
   // For NewsAPI the article's own source is the underlying outlet
   // (e.g. "TechCrunch"); show it alongside the aggregating source.
@@ -14,7 +21,12 @@ export function ArticleKicker({ article }: { article: Article }) {
       <span className="text-stone-400">{sourceLabel}</span>
       {outlet && <span className="text-stone-400">{outlet}</span>}
       {article.category && (
-        <span className="text-accent">{CATEGORY_LABELS[article.category]}</span>
+        <span
+          className={accentColor ? undefined : 'text-accent'}
+          style={accentColor ? { color: accentColor } : undefined}
+        >
+          {CATEGORY_LABELS[article.category]}
+        </span>
       )}
     </div>
   )
