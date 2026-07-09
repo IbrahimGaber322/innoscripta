@@ -1,11 +1,14 @@
 import { Link } from 'react-router-dom'
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
+import { CategorySection } from '../components/articles/CategorySection'
 import { EmptyState } from '../components/articles/EmptyState'
 import { FeedFooter } from '../components/articles/FeedFooter'
+import { SourceDigest } from '../components/articles/SourceDigest'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
 import { TopPick } from '../components/articles/TopPick'
 import { PersonaChips } from '../components/preferences/PersonaChips'
+import { CATEGORY_LABELS } from '../domain/category'
 import { useForYouFeed } from '../hooks/useForYouFeed'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { usePreferences } from '../hooks/usePreferences'
@@ -32,6 +35,29 @@ export function ForYouPage() {
   const topPick = followed[0] ?? rest[0]
   const followedRail = followed.filter((article) => article.id !== topPick?.id)
   const feedRest = rest.filter((article) => article.id !== topPick?.id)
+
+  // A spotlight on the first preferred topic that has stories in the feed.
+  const topicCategory = preferences.categories.find((category) =>
+    feedRest.some((article) => article.category === category),
+  )
+  const topicArticles = topicCategory
+    ? feedRest.filter((article) => article.category === topicCategory).slice(0, 3)
+    : []
+  const topicIds = new Set(topicArticles.map((article) => article.id))
+
+  // Short digests from the first couple of followed sources.
+  const afterTopic = feedRest.filter((article) => !topicIds.has(article.id))
+  const digests = preferences.sources
+    .slice(0, 2)
+    .map((sourceId) => ({
+      sourceId,
+      items: afterTopic.filter((article) => article.sourceId === sourceId).slice(0, 3),
+    }))
+    .filter((digest) => digest.items.length > 0)
+  const digestIds = new Set(digests.flatMap((digest) => digest.items.map((a) => a.id)))
+
+  // Everything else flows into the infinite-scrolling remainder.
+  const moreArticles = afterTopic.filter((article) => !digestIds.has(article.id))
 
   return (
     <div>
@@ -100,12 +126,34 @@ export function ForYouPage() {
             </section>
           )}
 
-          {feedRest.length > 0 && (
+          {topicCategory && topicArticles.length > 0 && (
+            <CategorySection
+              category={topicCategory}
+              articles={topicArticles}
+              title={`Because you follow ${CATEGORY_LABELS[topicCategory]}`}
+              actionLabel="Manage topics"
+              actionTo="/settings"
+            />
+          )}
+
+          {digests.length > 0 && (
+            <div className="mt-14 grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-2">
+              {digests.map((digest) => (
+                <SourceDigest
+                  key={digest.sourceId}
+                  sourceId={digest.sourceId}
+                  articles={digest.items}
+                />
+              ))}
+            </div>
+          )}
+
+          {moreArticles.length > 0 && (
             <section className="mt-14">
               <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
-                More from your feed
+                More from your interests
               </h2>
-              <ArticleGrid articles={feedRest} />
+              <ArticleGrid articles={moreArticles} />
             </section>
           )}
 

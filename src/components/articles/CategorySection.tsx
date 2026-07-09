@@ -6,10 +6,20 @@ import { ArticleCard } from './ArticleCard'
 interface CategorySectionProps {
   category: Category
   articles: Article[]
+  /** Heading override; defaults to the category label. */
+  title?: string
+  actionLabel?: string
+  actionTo?: string
 }
 
 /** A front-page section grouping a category's stories under a coloured rule. */
-export function CategorySection({ category, articles }: CategorySectionProps) {
+export function CategorySection({
+  category,
+  articles,
+  title,
+  actionLabel = 'View all',
+  actionTo = `/?categories=${category}`,
+}: CategorySectionProps) {
   const color = CATEGORY_COLORS[category]
 
   return (
@@ -22,13 +32,13 @@ export function CategorySection({ category, articles }: CategorySectionProps) {
           className="font-serif text-[27px] font-medium tracking-tight"
           style={{ color }}
         >
-          {CATEGORY_LABELS[category]}
+          {title ?? CATEGORY_LABELS[category]}
         </h2>
         <Link
-          to={`/?categories=${category}`}
+          to={actionTo}
           className="hover:text-ink flex items-center gap-1.5 text-[13px] font-semibold text-stone-500 transition-colors"
         >
-          View all
+          {actionLabel}
           <svg
             className="h-3.25 w-3.25"
             fill="none"
