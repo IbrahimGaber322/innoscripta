@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import DOMPurify from 'dompurify'
+import { useEffect } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArticleImage } from '../components/articles/ArticleImage'
 import { EmptyState } from '../components/articles/EmptyState'
@@ -119,6 +120,12 @@ export function ArticlePage() {
   const location = useLocation()
   const navigate = useNavigate()
 
+  // Opening a new article (e.g. from "More like this") should start at the top,
+  // not wherever the previous article was scrolled to.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [encodedId])
+
   const articleId = encodedId ? decodeArticleId(encodedId) : null
   const stateArticle = (location.state as { article?: Article } | undefined)?.article
 
@@ -202,13 +209,15 @@ export function ArticlePage() {
         )}
 
         <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-y border-stone-200 py-4">
-          <div className="flex items-center gap-3">
-            <span className="bg-ink text-paper flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-semibold uppercase">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="bg-ink text-paper flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold uppercase">
               {initials(article)}
             </span>
-            <div>
+            <div className="min-w-0">
               {article.author && (
-                <div className="text-ink text-sm font-semibold">{article.author}</div>
+                <div className="text-ink line-clamp-2 text-sm font-semibold">
+                  {article.author}
+                </div>
               )}
               <div className="text-[12.5px] text-stone-400">
                 <time dateTime={article.publishedAt}>
