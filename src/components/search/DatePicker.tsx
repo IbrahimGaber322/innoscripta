@@ -28,6 +28,8 @@ const MONTHS = [
   'December',
 ]
 
+const POPOVER_WIDTH = 288 // matches w-72
+
 function pad(value: number): string {
   return String(value).padStart(2, '0')
 }
@@ -36,16 +38,35 @@ function toISO(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
+/** Parses YYYY-MM-DD, rejecting impossible dates (e.g. 2026-02-30 overflows). */
 function fromISO(value?: string): Date | null {
-  if (!value) return null
-  const [year, month, day] = value.split('-').map(Number)
-  if (!year || !month || !day) return null
-  return new Date(year, month - 1, day)
+  const match = value ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(value) : null
+  if (!match) return null
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(year, month - 1, day)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null
+  }
+  return date
+}
+
+function startOfMonth(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1)
+}
+
+function addDays(date: Date, days: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days)
 }
 
 /** Six weeks of day cells covering (and padding around) the shown month. */
 function buildWeeks(view: Date): { date: Date; inMonth: boolean }[][] {
-  const first = new Date(view.getFullYear(), view.getMonth(), 1)
+  const first = startOfMonth(view)
   const cursor = new Date(first.getFullYear(), first.getMonth(), 1 - first.getDay())
   return Array.from({ length: 6 }, () =>
     Array.from({ length: 7 }, () => {
@@ -70,23 +91,58 @@ export function DatePicker({
 }: DatePickerProps) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const focusedDayRef = useRef<HTMLButtonElement | null>(null)
 
   const selected = fromISO(value)
   const today = toISO(new Date())
   const [view, setView] = useState<Date>(() => selected ?? fromISO(max) ?? new Date())
+  // The keyboard-focused day within the grid (roving tabindex).
+  const [focusISO, setFocusISO] = useState<string | null>(null)
+  // Horizontal shift (px, relative to the trigger) that keeps the popover on
+  // screen even when the field sits near the right edge on small viewports.
+  const [offsetLeft, setOffsetLeft] = useState(0)
 
-  // Re-centre on the selected month each time the calendar opens.
+  function clampToRange(date: Date): Date {
+    const iso = toISO(date)
+    if (min !== undefined && iso < min) return fromISO(min) ?? date
+    if (max !== undefined && iso > max) return fromISO(max) ?? date
+    return date
+  }
+
+  function close(returnFocus = true) {
+    setOpen(false)
+    if (returnFocus) triggerRef.current?.focus()
+  }
+
+  // On open: seed the view + keyboard focus, and clamp the popover to the viewport.
   useEffect(() => {
-    if (open) setView(fromISO(value) ?? fromISO(max) ?? new Date())
-  }, [open, value, max])
+    if (!open) return
+    const base = clampToRange(fromISO(value) ?? new Date())
+    setView(startOfMonth(base))
+    setFocusISO(toISO(base))
+
+    const rect = containerRef.current?.getBoundingClientRect()
+    if (rect) {
+      const width = Math.min(POPOVER_WIDTH, window.innerWidth - 16)
+      const wantLeft = Math.max(8, Math.min(rect.left, window.innerWidth - 8 - width))
+      setOffsetLeft(wantLeft - rect.left)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Keep the roving-tabindex day focused as it moves.
+  useEffect(() => {
+    if (open && focusISO) focusedDayRef.current?.focus()
+  }, [open, focusISO])
 
   useEffect(() => {
     if (!open) return
     function onPointerDown(event: MouseEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) setOpen(false)
+      if (!containerRef.current?.contains(event.target as Node)) close(false)
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape') close()
     }
     document.addEventListener('mousedown', onPointerDown)
     document.addEventListener('keydown', onKeyDown)
@@ -94,6 +150,7 @@ export function DatePicker({
       document.removeEventListener('mousedown', onPointerDown)
       document.removeEventListener('keydown', onKeyDown)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const weeks = useMemo(() => buildWeeks(view), [view])
@@ -106,7 +163,55 @@ export function DatePicker({
   function pick(date: Date) {
     if (isDisabled(date)) return
     onChange(toISO(date))
-    setOpen(false)
+    close()
+  }
+
+  function moveFocus(next: Date) {
+    const clamped = clampToRange(next)
+    setFocusISO(toISO(clamped))
+    setView(startOfMonth(clamped))
+  }
+
+  function onGridKeyDown(event: React.KeyboardEvent) {
+    const current = focusISO ? fromISO(focusISO) : null
+    if (!current) return
+    switch (event.key) {
+      case 'ArrowLeft':
+        moveFocus(addDays(current, -1))
+        break
+      case 'ArrowRight':
+        moveFocus(addDays(current, 1))
+        break
+      case 'ArrowUp':
+        moveFocus(addDays(current, -7))
+        break
+      case 'ArrowDown':
+        moveFocus(addDays(current, 7))
+        break
+      case 'Home':
+        moveFocus(addDays(current, -current.getDay()))
+        break
+      case 'End':
+        moveFocus(addDays(current, 6 - current.getDay()))
+        break
+      case 'PageUp':
+        moveFocus(
+          new Date(current.getFullYear(), current.getMonth() - 1, current.getDate()),
+        )
+        break
+      case 'PageDown':
+        moveFocus(
+          new Date(current.getFullYear(), current.getMonth() + 1, current.getDate()),
+        )
+        break
+      case 'Enter':
+      case ' ':
+        pick(current)
+        break
+      default:
+        return
+    }
+    event.preventDefault()
   }
 
   const prevMonthLast = toISO(new Date(view.getFullYear(), view.getMonth(), 0))
@@ -126,11 +231,12 @@ export function DatePicker({
   return (
     <div ref={containerRef} className="relative">
       <button
+        ref={triggerRef}
         type="button"
         aria-label={ariaLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
+        onClick={() => setOpen((current) => !current)}
         className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[13px] shadow-sm transition-colors ${
           open ? 'border-ink' : 'border-stone-300 hover:border-stone-400'
         } bg-paper`}
@@ -155,8 +261,10 @@ export function DatePicker({
       {open && (
         <div
           role="dialog"
+          aria-modal="true"
           aria-label={ariaLabel}
-          className="bg-paper absolute left-0 z-20 mt-2 w-72 rounded-xl border border-stone-200 p-3 shadow-lg"
+          style={{ left: offsetLeft }}
+          className="bg-paper absolute z-20 mt-2 w-[min(18rem,calc(100vw-1rem))] rounded-xl border border-stone-200 p-3 shadow-lg"
         >
           <div className="flex items-center justify-between px-1">
             <div className="font-serif text-[15px] font-medium">
@@ -184,7 +292,11 @@ export function DatePicker({
             </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-7 gap-y-1 text-center">
+          <div
+            role="grid"
+            onKeyDown={onGridKeyDown}
+            className="mt-3 grid grid-cols-7 gap-y-1 text-center"
+          >
             {WEEKDAYS.map((day) => (
               <div
                 key={day}
@@ -198,11 +310,14 @@ export function DatePicker({
               const disabled = isDisabled(date)
               const isSelected = value === iso
               const isToday = today === iso
+              const isFocusTarget = focusISO === iso
               return (
                 <div key={iso} className="flex justify-center">
                   <button
+                    ref={isFocusTarget ? focusedDayRef : undefined}
                     type="button"
                     disabled={disabled}
+                    tabIndex={isFocusTarget ? 0 : -1}
                     aria-label={formatDate(iso)}
                     aria-current={isToday ? 'date' : undefined}
                     aria-pressed={isSelected}
@@ -229,7 +344,7 @@ export function DatePicker({
               type="button"
               onClick={() => {
                 onChange(undefined)
-                setOpen(false)
+                close()
               }}
               className="hover:text-ink text-[12.5px] font-semibold text-stone-500 transition-colors"
             >
