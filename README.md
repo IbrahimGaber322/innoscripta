@@ -14,6 +14,14 @@ in a clean, mobile-friendly interface.
 
 Additional behavior worth knowing about:
 
+- **Editorial front page** — browsing (no keyword) leads with a top-stories
+  package: a large lead story beside a rail of the latest headlines, then the
+  rest of the feed below. An active search collapses to a flat, relevance-first
+  list.
+- **Infinite scroll** — both the Home and For You feeds load more as you
+  approach the bottom (an `IntersectionObserver` sentinel drives
+  `fetchNextPage`), with a spinner while loading and an "all caught up" divider
+  at the end. No "load more" button.
 - **In-app reader** — clicking an article opens a reader page. Guardian
   stories render their full body (fetched by content id and sanitized with
   DOMPurify); the other providers' APIs only share summaries, so those pages
@@ -143,8 +151,9 @@ npm run build         # type-check + production build
 - **`src/context/`** — the `PreferencesProvider` React context that holds
   preference state and mirrors changes to storage.
 - **`src/hooks/`** — `useSearchFilters` (URL ↔ filter state),
-  `useArticleSearch` (infinite query over the aggregator), `useForYouFeed`
-  (per-category queries shaped by preferences), `usePreferences`.
+  `useArticleSearch` and `useForYouFeed` (paginated infinite queries over the
+  aggregator, both fanning out per category via `fetchAcrossCategories`),
+  `useInfiniteScroll` (sentinel that drives the next page), `usePreferences`.
 - **`src/components/`** / **`src/pages/`** — presentational layer only.
 - **`src/test/`** — all unit tests (mirroring the `src` layout via the `@`
   import alias) plus realistic provider response fixtures.
