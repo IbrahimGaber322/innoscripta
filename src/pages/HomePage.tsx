@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
 import { CategorySection } from '../components/articles/CategorySection'
@@ -53,10 +53,11 @@ export function HomePage() {
   // source or date, so the active controls are visible.
   const [filtersOpen, setFiltersOpen] = useState(panelFilterCount > 0)
 
-  const articles = query.data?.pages.flatMap((page) => page.articles) ?? []
+  const pages = query.data?.pages
+  const articles = useMemo(() => pages?.flatMap((page) => page.articles) ?? [], [pages])
   // Per-source skip/failure status only changes between filter changes,
   // so the first page's errors describe the whole result set.
-  const sourceErrors = query.data?.pages[0]?.errors ?? []
+  const sourceErrors = pages?.[0]?.errors ?? []
 
   const sentinelRef = useInfiniteScroll<HTMLDivElement>(() => query.fetchNextPage(), {
     enabled: query.hasNextPage && !query.isFetchingNextPage,
@@ -76,12 +77,14 @@ export function HomePage() {
 
   // Split the browse feed into the package, the category sections (a glimpse
   // of each topic), and the remainder shown under "Earlier this week".
-  const pool = articles.slice(5)
-  const sections = showPackage ? buildCategorySections(pool) : []
-  const sectionedIds = new Set(
-    sections.flatMap((section) => section.articles.map((article) => article.id)),
-  )
-  const earlier = pool.filter((article) => !sectionedIds.has(article.id))
+  const { sections, earlier } = useMemo(() => {
+    const pool = articles.slice(5)
+    const grouped = showPackage ? buildCategorySections(pool) : []
+    const usedIds = new Set(
+      grouped.flatMap((section) => section.articles.map((article) => article.id)),
+    )
+    return { sections: grouped, earlier: pool.filter((a) => !usedIds.has(a.id)) }
+  }, [articles, showPackage])
 
   // The dark "Top headlines" box only appears on the browse front page. It's a
   // separate NewsAPI query, so drop any story already shown in the feed above

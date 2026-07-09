@@ -24,12 +24,22 @@ export interface ForYouFeed {
   isFetchingNextPage: boolean
 }
 
+/**
+ * Whether a followed author's name appears in the byline as a whole word —
+ * so following "John" matches "John Roberts" but not "Johnson".
+ */
 export function matchesFollowedAuthor(article: Article, authors: string[]): boolean {
   if (!article.author) {
     return false
   }
   const byline = article.author.toLowerCase()
-  return authors.some((author) => byline.includes(author.toLowerCase()))
+  return authors.some((author) => {
+    const name = author.trim().toLowerCase()
+    if (!name) return false
+    // Word-boundary match, escaping any regex-special characters in the name.
+    const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    return new RegExp(`(^|\\W)${escaped}(\\W|$)`).test(byline)
+  })
 }
 
 /**
@@ -72,13 +82,19 @@ export function useForYouFeed(): ForYouFeed {
       lastPage.hasMore ? allPages.length + 1 : undefined,
   })
 
-  // Merging a few dozen articles is cheap enough to do on every render.
-  const merged = mergeAggregatedPages(query.data?.pages ?? [])
-  const followed = merged.articles.filter((article) =>
-    matchesFollowedAuthor(article, preferences.authors),
-  )
-  const rest = merged.articles.filter(
-    (article) => !matchesFollowedAuthor(article, preferences.authors),
+  // Merge + partition only when the loaded pages or followed authors change.
+  const pages = query.data?.pages
+  const merged = useMemo(() => mergeAggregatedPages(pages ?? []), [pages])
+  const { followed, rest } = useMemo(
+    () => ({
+      followed: merged.articles.filter((article) =>
+        matchesFollowedAuthor(article, preferences.authors),
+      ),
+      rest: merged.articles.filter(
+        (article) => !matchesFollowedAuthor(article, preferences.authors),
+      ),
+    }),
+    [merged, preferences.authors],
   )
 
   const isDefaultFeed =
