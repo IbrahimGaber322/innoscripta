@@ -2,15 +2,38 @@ import { Link } from 'react-router-dom'
 import { ArticleCardSkeleton } from '../components/articles/ArticleCardSkeleton'
 import { ArticleGrid } from '../components/articles/ArticleGrid'
 import { EmptyState } from '../components/articles/EmptyState'
+import { FeedFooter } from '../components/articles/FeedFooter'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
+import { TopPick } from '../components/articles/TopPick'
 import { useForYouFeed } from '../hooks/useForYouFeed'
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
+import { formatToday } from '../lib/formatDate'
 
 export function ForYouPage() {
-  const { isPending, followed, rest, errors, isDefaultFeed } = useForYouFeed()
+  const {
+    isPending,
+    followed,
+    rest,
+    errors,
+    isDefaultFeed,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useForYouFeed()
+
+  const sentinelRef = useInfiniteScroll<HTMLDivElement>(fetchNextPage, {
+    enabled: hasNextPage && !isFetchingNextPage,
+  })
+
+  // The most relevant story leads; a followed author outranks the rest.
+  const topPick = followed[0] ?? rest[0]
+  const followedRail = followed.filter((article) => article.id !== topPick?.id)
+  const feedRest = rest.filter((article) => article.id !== topPick?.id)
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+      <div className="text-[13px] text-stone-500">{formatToday()}</div>
+      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <h1 className="font-serif text-4xl font-medium tracking-tight sm:text-5xl">
           For you
         </h1>
@@ -46,7 +69,7 @@ export function ForYouPage() {
         <div className="mt-12">
           <ArticleCardSkeleton />
         </div>
-      ) : followed.length === 0 && rest.length === 0 ? (
+      ) : !topPick ? (
         <div className="mt-12">
           <EmptyState
             title="Nothing to show yet"
@@ -62,24 +85,36 @@ export function ForYouPage() {
         </div>
       ) : (
         <>
-          {followed.length > 0 && (
-            <section className="mt-12">
-              <h2 className="font-serif text-2xl font-medium">From authors you follow</h2>
-              <div className="mt-6 border-b border-stone-200 pb-12">
-                <ArticleGrid articles={followed} />
-              </div>
+          <div className="mt-10">
+            <TopPick article={topPick} />
+          </div>
+
+          {followedRail.length > 0 && (
+            <section className="mt-14">
+              <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
+                From authors you follow
+              </h2>
+              <ArticleGrid articles={followedRail} />
             </section>
           )}
-          {rest.length > 0 && (
-            <section className="mt-12">
-              {followed.length > 0 && (
-                <h2 className="mb-6 font-serif text-2xl font-medium">
-                  More from your feed
-                </h2>
-              )}
-              <ArticleGrid articles={rest} />
+
+          {feedRest.length > 0 && (
+            <section className="mt-14">
+              <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
+                More from your feed
+              </h2>
+              <ArticleGrid articles={feedRest} />
             </section>
           )}
+
+          <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+          <FeedFooter
+            isLoadingMore={isFetchingNextPage}
+            hasMore={hasNextPage}
+            hasItems={Boolean(topPick)}
+            loadingLabel="Personalizing more stories"
+            doneLabel="That's everything from your sources today"
+          />
         </>
       )}
     </div>
