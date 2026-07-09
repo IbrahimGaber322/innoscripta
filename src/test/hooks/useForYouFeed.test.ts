@@ -29,6 +29,17 @@ describe('matchesFollowedAuthor', () => {
     expect(matchesFollowedAuthor(articleBy('Alex Hern'), ['Jane Reporter'])).toBe(false)
   })
 
+  it('matches whole words only, not substrings', () => {
+    // "Hern" must not match "Hernandez"; "John" must not match "Johnson".
+    expect(matchesFollowedAuthor(articleBy('Ana Hernandez'), ['Hern'])).toBe(false)
+    expect(matchesFollowedAuthor(articleBy('Boris Johnson'), ['John'])).toBe(false)
+    expect(matchesFollowedAuthor(articleBy('John Roberts'), ['John'])).toBe(true)
+  })
+
+  it('ignores blank followed-author entries', () => {
+    expect(matchesFollowedAuthor(articleBy('Alex Hern'), ['  '])).toBe(false)
+  })
+
   it('never matches articles without a byline', () => {
     expect(matchesFollowedAuthor(articleBy(undefined), ['Alex Hern'])).toBe(false)
   })
