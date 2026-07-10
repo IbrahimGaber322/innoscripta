@@ -11,7 +11,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "new:source": "node scripts/new-source.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.2",
