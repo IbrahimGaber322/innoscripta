@@ -1,7 +1,8 @@
 import type { ArticlePage, ArticleQuery } from '../../../../domain/article'
 import type { Category } from '../../../../domain/category'
-import { buildUrl, getJson } from '../../http'
-import type { NewsSource, SourceCapabilities } from '../../NewsSource'
+import { buildUrl } from '../../http'
+import { HttpNewsSource, type SourceRequest } from '../../HttpNewsSource'
+import type { SourceCapabilities } from '../../NewsSource'
 import { mapNewsApiArticle } from './mapArticle'
 import type { NewsApiResponse } from './types'
 
@@ -64,7 +65,7 @@ export function buildNewsApiRequestUrl(query: ArticleQuery): string {
   })
 }
 
-export class NewsApiSource implements NewsSource {
+export class NewsApiSource extends HttpNewsSource<NewsApiResponse> {
   readonly id = 'newsapi'
   readonly name = 'NewsAPI'
   readonly capabilities: SourceCapabilities = {
@@ -73,22 +74,15 @@ export class NewsApiSource implements NewsSource {
     dateFilterWithCategory: false,
   }
 
-  private readonly apiKey: string | undefined
-
-  constructor(apiKey: string | undefined) {
-    this.apiKey = apiKey
-  }
-
-  isConfigured(): boolean {
-    return Boolean(this.apiKey)
-  }
-
-  async fetchArticles(query: ArticleQuery, signal?: AbortSignal): Promise<ArticlePage> {
-    const data = await getJson<NewsApiResponse>(buildNewsApiRequestUrl(query), {
+  protected buildRequest(query: ArticleQuery): SourceRequest {
+    return {
+      url: buildNewsApiRequestUrl(query),
+      // NewsAPI takes the key as a header, keeping it out of the URL.
       headers: { 'X-Api-Key': this.apiKey ?? '' },
-      signal,
-    })
+    }
+  }
 
+  protected parseResponse(data: NewsApiResponse, query: ArticleQuery): ArticlePage {
     const articles = data.articles
       .map((raw) => mapNewsApiArticle(raw, query.category))
       .filter((article) => article !== null)

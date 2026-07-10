@@ -1,7 +1,8 @@
 import type { ArticlePage, ArticleQuery } from '../../../../domain/article'
 import { CATEGORIES, type Category } from '../../../../domain/category'
 import { buildUrl, getJson } from '../../http'
-import type { FullArticle, NewsSource, SourceCapabilities } from '../../NewsSource'
+import { HttpNewsSource, type SourceRequest } from '../../HttpNewsSource'
+import type { FullArticle, SourceCapabilities } from '../../NewsSource'
 import { mapGuardianArticle } from './mapArticle'
 import type { GuardianItemResponse, GuardianResponse } from './types'
 
@@ -52,7 +53,7 @@ export function buildGuardianItemUrl(providerId: string): string {
   })
 }
 
-export class GuardianSource implements NewsSource {
+export class GuardianSource extends HttpNewsSource<GuardianResponse> {
   readonly id = 'guardian'
   readonly name = 'The Guardian'
   // All filters compose on the Guardian API, so every capability is on.
@@ -62,23 +63,14 @@ export class GuardianSource implements NewsSource {
     dateFilterWithCategory: true,
   }
 
-  private readonly apiKey: string | undefined
-
-  constructor(apiKey: string | undefined) {
-    this.apiKey = apiKey
-  }
-
-  isConfigured(): boolean {
-    return Boolean(this.apiKey)
-  }
-
-  async fetchArticles(query: ArticleQuery, signal?: AbortSignal): Promise<ArticlePage> {
+  protected buildRequest(query: ArticleQuery): SourceRequest {
     const url = new URL(buildGuardianRequestUrl(query))
     url.searchParams.set('api-key', this.apiKey ?? '')
+    return { url: url.toString() }
+  }
 
-    const data = await getJson<GuardianResponse>(url.toString(), { signal })
+  protected parseResponse(data: GuardianResponse, query: ArticleQuery): ArticlePage {
     const { total, pages, currentPage, results } = data.response
-
     return {
       articles: results.map((raw) => mapGuardianArticle(raw, query.category)),
       totalResults: total,

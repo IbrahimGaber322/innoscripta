@@ -1,7 +1,8 @@
 import type { ArticlePage, ArticleQuery } from '../../../../domain/article'
 import type { Category } from '../../../../domain/category'
-import { buildUrl, getJson } from '../../http'
-import type { NewsSource, SourceCapabilities } from '../../NewsSource'
+import { buildUrl } from '../../http'
+import { HttpNewsSource, type SourceRequest } from '../../HttpNewsSource'
+import type { SourceCapabilities } from '../../NewsSource'
 import { mapNytArticle } from './mapArticle'
 import type { NytResponse } from './types'
 
@@ -51,7 +52,7 @@ export function buildNytRequestUrl(query: ArticleQuery): string {
   })
 }
 
-export class NytimesSource implements NewsSource {
+export class NytimesSource extends HttpNewsSource<NytResponse> {
   readonly id = 'nytimes'
   readonly name = 'The New York Times'
   readonly capabilities: SourceCapabilities = {
@@ -71,21 +72,13 @@ export class NytimesSource implements NewsSource {
     dateFilterWithCategory: true,
   }
 
-  private readonly apiKey: string | undefined
-
-  constructor(apiKey: string | undefined) {
-    this.apiKey = apiKey
-  }
-
-  isConfigured(): boolean {
-    return Boolean(this.apiKey)
-  }
-
-  async fetchArticles(query: ArticleQuery, signal?: AbortSignal): Promise<ArticlePage> {
+  protected buildRequest(query: ArticleQuery): SourceRequest {
     const url = new URL(buildNytRequestUrl(query))
     url.searchParams.set('api-key', this.apiKey ?? '')
+    return { url: url.toString() }
+  }
 
-    const data = await getJson<NytResponse>(url.toString(), { signal })
+  protected parseResponse(data: NytResponse, query: ArticleQuery): ArticlePage {
     // The API returns docs: null (not an empty array) for zero results.
     const docs = data.response.docs ?? []
     // The pagination block was renamed meta → metadata in the 2024 schema
