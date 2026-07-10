@@ -237,6 +237,7 @@ npm run test           # unit tests (Vitest + React Testing Library)
 npm run lint           # oxlint
 npm run format         # Prettier (write); format:check to verify
 npm run preview        # preview the production build locally
+npm run new:source     # scaffold + wire a new news source (see "Extending")
 ```
 
 ---
@@ -363,12 +364,28 @@ src/
 The app is **source-agnostic**: nothing outside an adapter names a specific
 provider. Sources are identified by a plain string, validated and labelled at
 runtime from the registry, so a new provider needs **no changes to the domain
-types, the aggregator, the hooks, or any component**. Adding an HTTP/JSON source
-is three steps:
+types, the aggregator, the hooks, or any component**.
 
-1. **Key** — add `VITE_X_API_KEY` to `.env` / `.env.example`, plus the matching
-   build `ARG` in the `Dockerfile` and `docker-compose.yml` (Docker builds and
-   Vite both resolve env at build time).
+**The fast path — scaffold it:**
+
+```bash
+npm run new:source -- npr "NPR"      # or: npm run new:source  (prompts you)
+```
+
+The generator creates the adapter (`nprSource.ts`, `mapArticle.ts`, `types.ts`)
+and a test stub, and wires up `registry.ts`, `.env.example`, the `Dockerfile`,
+`docker-compose.yml`, and `vite-env.d.ts` — then formats everything so the build
+stays green. All edits are validated first, so a bad run changes nothing, and
+re-running cleanly aborts. You're left with **three provider-specific TODOs**:
+the request in `buildRequest`, the response shape in `types.ts`, and the field
+mapping in `mapArticle.ts`. The new source is inert until you add its key, so the
+app keeps working immediately.
+
+**What it does under the hood** — the same three steps done by hand:
+
+1. **Key** — add `VITE_<TOKEN>_API_KEY` to `.env` / `.env.example`, plus the
+   matching build `ARG` in the `Dockerfile` and `docker-compose.yml` (Docker
+   builds and Vite both resolve env at build time).
 2. **Adapter** — create `src/services/news/adapters/x/` with `xSource.ts`
    (extends `HttpNewsSource`, implements `buildRequest` + `parseResponse`),
    `mapArticle.ts`, and `types.ts`.
