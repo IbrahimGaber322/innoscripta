@@ -8,7 +8,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-93%20passing-1B7A4E?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-96%20passing-1B7A4E?style=flat-square)
 ![Docker](https://img.shields.io/badge/Docker-multi--stage-2496ED?style=flat-square&logo=docker&logoColor=white)
 
 ![NewsHub front page](docs/home.png)
@@ -39,7 +39,7 @@
   - [Request lifecycle](#request-lifecycle)
   - [State management](#state-management)
   - [Project structure](#project-structure)
-  - [Extending: adding a fourth source](#extending-adding-a-fourth-source)
+  - [Extending: adding a source](#extending-adding-a-source)
 - [Design decisions & rationale](#design-decisions--rationale)
   - [Choice of data sources](#choice-of-data-sources)
   - [Data layer](#data-layer-decisions)
@@ -158,7 +158,7 @@ language.
 | Styling              | Tailwind CSS v4 (`@theme` tokens, no PostCSS)               |
 | Server state         | TanStack Query v5 (infinite queries, caching, cancellation) |
 | Sanitization         | DOMPurify (Guardian article bodies)                         |
-| Testing              | Vitest + React Testing Library (93 tests)                   |
+| Testing              | Vitest + React Testing Library (96 tests)                   |
 | Linting / formatting | oxlint + Prettier                                           |
 | Runtime image        | nginx (Alpine), served from a multi-stage Docker build      |
 
@@ -287,17 +287,26 @@ type. Every provider quirk is absorbed at the edge, in a small adapter.
   category filters combine in a single request. This lets the aggregator handle
   provider differences _honestly_ instead of guessing or assuming a lowest
   common denominator.
-- **`adapters/<provider>/`** — one folder per provider, each with request
-  building (`*Source.ts`), a pure response-to-domain mapper (`mapArticle.ts`),
-  and raw response types (`types.ts`). Mappers absorb every quirk: NewsAPI's
-  `[Removed]` ghost entries, Guardian's trailing HTML, NYT's relative image URLs
-  and `"By "` bylines.
+- **`HttpNewsSource.ts`** — an abstract base class that owns everything every
+  HTTP/JSON provider shares: credential storage, `isConfigured()`, and the
+  fetch → map flow. A concrete source implements only two hooks — `buildRequest`
+  (turn a query into a URL + auth headers) and `parseResponse` (turn the raw
+  envelope into a domain page). This is what keeps the adapters tiny.
+- **`adapters/<provider>/`** — one folder per provider, each with a `*Source.ts`
+  that extends `HttpNewsSource` (plus an exported request-builder used in
+  tests), a pure response-to-domain mapper (`mapArticle.ts`), and raw response
+  types (`types.ts`). Mappers absorb every quirk: NewsAPI's `[Removed]` ghost
+  entries, Guardian's trailing HTML, NYT's relative image URLs and `"By "`
+  bylines.
 - **`aggregator.ts`** — `fetchAggregated` fans a query out to eligible sources
   with `Promise.allSettled`, then merges, dedupes, and orders the results;
   `fetchAcrossCategories` handles multi-category feeds; failures become
   per-source `SourceError`s rather than a broken page.
-- **`registry.ts`** — the single list of installed sources (`ALL_SOURCES`) and
-  `getEffectiveSources()` for applying a source selection.
+- **`registry.ts`** — the **single source of truth for source identity**: the
+  list of installed sources (`ALL_SOURCES`, each paired with its API key), plus
+  `getEffectiveSources()` for a selection and the `getKnownSourceIds()` /
+  `isKnownSourceId()` / `getSourceLabel()` helpers the rest of the app uses
+  instead of any hardcoded source list or label map.
 
 ### Request lifecycle
 
@@ -331,12 +340,13 @@ src/
 ├── domain/                # Provider-agnostic types (Article, Category, Preferences)
 ├── services/
 │   ├── news/
-│   │   ├── NewsSource.ts   # The adapter contract + capabilities
-│   │   ├── aggregator.ts   # Fan-out, merge, dedupe, order, error-isolate
-│   │   ├── registry.ts     # ALL_SOURCES + source selection
-│   │   ├── topHeadlines.ts # "Top headlines" box data
+│   │   ├── NewsSource.ts      # The adapter contract + capabilities
+│   │   ├── HttpNewsSource.ts  # Abstract base for HTTP/JSON providers
+│   │   ├── aggregator.ts      # Fan-out, merge, dedupe, order, error-isolate
+│   │   ├── registry.ts        # Installed sources + keys, identity & labels
+│   │   ├── topHeadlines.ts    # "Top headlines" box (source-agnostic)
 │   │   └── adapters/
-│   │       ├── newsapi/    # newsApiSource.ts · mapArticle.ts · types.ts
+│   │       ├── newsapi/       # newsApiSource.ts · mapArticle.ts · types.ts
 │   │       ├── guardian/
 │   │       └── nytimes/
 │   └── preferences/        # Validated localStorage persistence
@@ -348,21 +358,51 @@ src/
 └── test/                  # Unit tests mirroring src, plus response fixtures
 ```
 
-### Extending: adding a fourth source
+### Extending: adding a source
 
-Because consumers depend only on the `NewsSource` interface (open–closed
-principle), adding a provider is **one adapter folder plus one line in
-`registry.ts`** — no changes to the aggregator, hooks, or UI.
+The app is **source-agnostic**: nothing outside an adapter names a specific
+provider. Sources are identified by a plain string, validated and labelled at
+runtime from the registry, so a new provider needs **no changes to the domain
+types, the aggregator, the hooks, or any component**. Adding an HTTP/JSON source
+is three steps:
+
+1. **Key** — add `VITE_X_API_KEY` to `.env` / `.env.example`, plus the matching
+   build `ARG` in the `Dockerfile` and `docker-compose.yml` (Docker builds and
+   Vite both resolve env at build time).
+2. **Adapter** — create `src/services/news/adapters/x/` with `xSource.ts`
+   (extends `HttpNewsSource`, implements `buildRequest` + `parseResponse`),
+   `mapArticle.ts`, and `types.ts`.
+3. **Register** — one line in `registry.ts`.
 
 ```ts
-// registry.ts
+// xSource.ts — a complete source is just identity + two hooks
+export class XSource extends HttpNewsSource<XResponse> {
+  readonly id = 'x'
+  readonly name = 'X News'
+  readonly capabilities = { categories: [...], dateFilter: true, dateFilterWithCategory: true }
+
+  protected buildRequest(query: ArticleQuery): SourceRequest {
+    return { url: buildXRequestUrl(query, this.apiKey) }
+  }
+  protected parseResponse(raw: XResponse, query: ArticleQuery): ArticlePage {
+    return { articles: raw.docs.map((d) => mapXArticle(d, query.category)), ... }
+  }
+}
+
+// registry.ts — the only shared line that changes
 export const ALL_SOURCES: NewsSource[] = [
-  new NewsApiSource(getApiKey('newsapi')),
-  new GuardianSource(getApiKey('guardian')),
-  new NytimesSource(getApiKey('nytimes')),
-  new NprSource(getApiKey('npr')), // ← the only line that changes
+  new NewsApiSource(readKey(import.meta.env.VITE_NEWSAPI_API_KEY)),
+  new GuardianSource(readKey(import.meta.env.VITE_GUARDIAN_API_KEY)),
+  new NytimesSource(readKey(import.meta.env.VITE_NYT_API_KEY)),
+  new XSource(readKey(import.meta.env.VITE_X_API_KEY)), // ← add the source
 ]
 ```
+
+A source can opt into extras through optional `NewsSource` methods:
+`fetchFullArticle` (render the full body in-app, as the Guardian does) or
+`fetchTopHeadlines` (power the front-page ranked box). Non-JSON providers
+(RSS/XML) slot in as a sibling base class — the `NewsSource` interface doesn't
+assume JSON.
 
 ---
 
@@ -390,6 +430,8 @@ with no self-service access; **BBC News** has no official public API.
 | Decision                                                | Why                                                                                                                                                                                                                                                       |
 | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Source-adapter pattern** (one adapter per provider)   | Isolates every provider's request format and response quirks behind a single interface, so the rest of the app is provider-agnostic (SOLID: single responsibility, dependency inversion).                                                                 |
+| **`HttpNewsSource` abstract base class**                | Every HTTP/JSON provider shares the same credential + fetch → map flow. The base owns it (template method); a source implements only `buildRequest` + `parseResponse`, so adding one means writing intent, not boilerplate.                               |
+| **Registry-driven identity (no hardcoded source list)** | `SourceId` is a plain string; the installed sources define what's valid (`isKnownSourceId`) and how it's labelled (`getSourceLabel`) at runtime. Nothing outside an adapter names a provider, so the app stays source-agnostic and scalable.              |
 | **Capability declaration per source**                   | Providers genuinely differ (NewsAPI can't combine date + category; supports fewer categories). Declaring capabilities lets the aggregator send only queries a source can honor — honest results instead of a lowest-common-denominator or silent empties. |
 | **Aggregator uses `Promise.allSettled`**                | One slow, rate-limited, or unkeyed provider must never break the page. Failures are isolated into per-source error chips (graceful degradation).                                                                                                          |
 | **Cross-source dedupe by URL + title**                  | NewsAPI re-indexes Guardian and NYT content, so the same story arrives twice; dedupe keeps the feed clean.                                                                                                                                                |
@@ -449,11 +491,13 @@ with no self-service access; **BBC News** has no official public API.
   down provider degrades to a chip; the page always renders something useful.
 - **Intent-aware UX.** Browsing, searching, and personalization each get a
   layout that fits what the user is trying to do, unified by one design system.
-- **Extensible by construction.** A new source is one adapter and one registry
-  line — the open–closed principle in practice, demonstrated above.
+- **Source-agnostic by construction.** A new source is one adapter (two methods
+  on `HttpNewsSource`) plus one registry line; identity, validation, and labels
+  resolve from the registry at runtime, so nothing outside an adapter names a
+  provider — the open–closed principle in practice, demonstrated above.
 - **Trustworthy state.** Filters in the URL and validated, versioned preference
   storage make the app shareable, refresh-proof, and forward-compatible.
-- **Tested where it counts.** 93 tests cover the mappers, request building, the
+- **Tested where it counts.** 96 tests cover the mappers, request building, the
   aggregator's merge/dedupe/order/skip logic, storage, and URL state.
 - **Accessible details.** Keyboard-navigable date picker with focus management,
   semantic roles, and consistent affordances.
@@ -462,7 +506,7 @@ with no self-service access; **BBC News** has no official public API.
 
 ## Testing
 
-`npm run test` runs **93 tests across 16 files**, covering the parts with real
+`npm run test` runs **96 tests across 17 files**, covering the parts with real
 logic:
 
 - each adapter's **mapper** against realistic response fixtures (removed
@@ -470,6 +514,9 @@ logic:
   multimedia schemas),
 - each adapter's **request building** (endpoint selection, date reformatting,
   pagination conversion, no key leakage into URLs),
+- the **`HttpNewsSource` base-class contract** (a `FakeSource` proving the
+  `buildRequest` → fetch → `parseResponse` flow, credential handling, and header
+  passing — doubling as proof that a new source is trivial to add),
 - the **aggregator** (merging, sorting, dedupe, capability skipping, failure
   isolation),
 - **preferences storage** (round-trip, corruption fallback, invalid-entry
@@ -494,6 +541,7 @@ logic:
 - **Selecting many categories multiplies requests** (one per category per
   source), so a large selection can briefly trip the NYT rate limit — it
   degrades to a warning chip while the other sources keep rendering.
-- **"Top headlines" is sourced from NewsAPI** because no provider exposes
-  cross-source popularity; it is the day's biggest stories from that endpoint,
-  not a global ranking.
+- **"Top headlines" is a per-source capability** (`fetchTopHeadlines`), and of
+  the three bundled providers only NewsAPI exposes a cross-outlet ranking, so
+  the box shows its biggest stories — not a global, cross-source popularity
+  ranking. Any future source that offers one can power the box instead.
