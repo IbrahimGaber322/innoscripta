@@ -203,7 +203,7 @@ export function ArticlePage() {
           <span className="text-stone-400">{sourceLabel}</span>
           {article.category && (
             <>
-              <span className="h-[3px] w-[3px] rounded-full bg-stone-300" />
+              <span className="size-0.75 rounded-full bg-stone-300" />
               <span className="text-accent">{CATEGORY_LABELS[article.category]}</span>
             </>
           )}
@@ -249,7 +249,7 @@ export function ArticlePage() {
       </header>
 
       {article.imageUrl && (
-        <figure className="mx-auto mt-12 max-w-[1000px]">
+        <figure className="mx-auto mt-12 max-w-250">
           <ArticleImage article={article} aspectClass="aspect-16/9" />
           <figcaption className="mt-2.5 text-[12.5px] text-stone-400">
             Photograph via {sourceLabel}
