@@ -9,7 +9,7 @@ interface TopHeadlinesProps {
 
 /**
  * The dark "Top headlines" package: a ranked list of the day's biggest
- * stories. Sourced from NewsAPI's cross-outlet headlines.
+ * stories, from whichever source exposes a cross-outlet ranking.
  */
 export function TopHeadlines({ articles }: TopHeadlinesProps) {
   if (articles.length === 0) {

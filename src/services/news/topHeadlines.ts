@@ -1,42 +1,29 @@
-import { getApiKey } from '../../config/env'
 import type { Article } from '../../domain/article'
-import { mapNewsApiArticle } from './adapters/newsapi/mapArticle'
-import type { NewsApiResponse } from './adapters/newsapi/types'
-import { buildUrl, getJson } from './http'
+import { ALL_SOURCES } from './registry'
 
-const ENDPOINT = 'https://newsapi.org/v2/top-headlines'
+/** The first configured source that can supply a ranked headlines list. */
+function topHeadlinesSource() {
+  return ALL_SOURCES.find((source) => source.isConfigured() && source.fetchTopHeadlines)
+}
 
-/** The "top headlines" box needs the NewsAPI key to load. */
+/** True when some installed source can power the "top headlines" box. */
 export function canFetchTopHeadlines(): boolean {
-  return Boolean(getApiKey('newsapi'))
+  return topHeadlinesSource() !== undefined
 }
 
 /**
- * The day's biggest headlines across NewsAPI's outlets — a real, ranked list
- * powering the front-page "Top headlines" box. Returns an empty list when the
- * NewsAPI key is not configured.
+ * The day's biggest headlines for the front-page "Top headlines" box, taken
+ * from the first installed source that exposes a cross-outlet ranking
+ * (`fetchTopHeadlines`). Returns an empty list when no such source is
+ * configured — the box then simply hides.
  */
 export async function fetchTopHeadlines(
   limit = 6,
   signal?: AbortSignal,
 ): Promise<Article[]> {
-  const apiKey = getApiKey('newsapi')
-  if (!apiKey) {
+  const source = topHeadlinesSource()
+  if (!source?.fetchTopHeadlines) {
     return []
   }
-
-  const url = buildUrl(ENDPOINT, {
-    language: 'en',
-    category: 'general',
-    pageSize: limit,
-  })
-  const data = await getJson<NewsApiResponse>(url, {
-    headers: { 'X-Api-Key': apiKey },
-    signal,
-  })
-
-  return data.articles
-    .map((raw) => mapNewsApiArticle(raw))
-    .filter((article): article is Article => article !== null)
-    .slice(0, limit)
+  return source.fetchTopHeadlines(limit, signal)
 }

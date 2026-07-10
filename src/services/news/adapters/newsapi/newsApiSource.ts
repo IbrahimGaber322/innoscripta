@@ -1,6 +1,6 @@
-import type { ArticlePage, ArticleQuery } from '../../../../domain/article'
+import type { Article, ArticlePage, ArticleQuery } from '../../../../domain/article'
 import type { Category } from '../../../../domain/category'
-import { buildUrl } from '../../http'
+import { buildUrl, getJson } from '../../http'
 import { HttpNewsSource, type SourceRequest } from '../../HttpNewsSource'
 import type { SourceCapabilities } from '../../NewsSource'
 import { mapNewsApiArticle } from './mapArticle'
@@ -92,5 +92,23 @@ export class NewsApiSource extends HttpNewsSource<NewsApiResponse> {
       totalResults: data.totalResults,
       hasMore: query.page * query.pageSize < data.totalResults,
     }
+  }
+
+  /** NewsAPI's cross-outlet top headlines power the front-page ranked box. */
+  async fetchTopHeadlines(limit: number, signal?: AbortSignal): Promise<Article[]> {
+    const url = buildUrl(`${BASE_URL}/top-headlines`, {
+      language: 'en',
+      category: 'general',
+      pageSize: limit,
+    })
+    const data = await getJson<NewsApiResponse>(url, {
+      headers: { 'X-Api-Key': this.apiKey ?? '' },
+      signal,
+    })
+
+    return data.articles
+      .map((raw) => mapNewsApiArticle(raw))
+      .filter((article) => article !== null)
+      .slice(0, limit)
   }
 }

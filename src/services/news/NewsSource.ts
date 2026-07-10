@@ -39,6 +39,11 @@ export interface NewsSource {
    * for providers whose API offers it (currently only the Guardian).
    */
   fetchFullArticle?(articleId: string, signal?: AbortSignal): Promise<FullArticle | null>
+  /**
+   * Optional: the day's biggest headlines for the front-page "Top headlines"
+   * box, for providers that expose a cross-outlet ranking.
+   */
+  fetchTopHeadlines?(limit: number, signal?: AbortSignal): Promise<Article[]>
 }
 
 /** A per-source failure surfaced to the UI without failing the whole page. */

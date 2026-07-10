@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { canFetchTopHeadlines, fetchTopHeadlines } from '../services/news/topHeadlines'
 
-/** Loads the ranked "top headlines" list, when the NewsAPI key is present. */
+/** Loads the ranked "top headlines" list, when a source can supply it. */
 export function useTopHeadlines(enabled: boolean) {
   return useQuery({
     queryKey: ['top-headlines'],
