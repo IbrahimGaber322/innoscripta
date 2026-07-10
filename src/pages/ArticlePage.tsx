@@ -5,11 +5,11 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArticleImage } from '../components/articles/ArticleImage'
 import { EmptyState } from '../components/articles/EmptyState'
 import { CATEGORY_LABELS } from '../domain/category'
-import { SOURCE_LABELS, type Article } from '../domain/article'
+import type { Article } from '../domain/article'
 import { articlePath, decodeArticleId } from '../lib/articleRoute'
 import { formatDate } from '../lib/formatDate'
 import { useRelatedArticles } from '../hooks/useRelatedArticles'
-import { ALL_SOURCES } from '../services/news/registry'
+import { ALL_SOURCES, getSourceLabel } from '../services/news/registry'
 
 const COLUMN = 'mx-auto max-w-[760px]'
 
@@ -24,7 +24,7 @@ const BODY_CLASS =
 
 /** Two-letter monogram from the byline (or the source, when anonymous). */
 function initials(article: Article): string {
-  const source = article.author ?? SOURCE_LABELS[article.sourceId]
+  const source = article.author ?? getSourceLabel(article.sourceId)
   const words = source
     .replace(/^by\s+/i, '')
     .split(/\s+/)
@@ -57,7 +57,7 @@ function ContinueReading({
   /** True when the full article body is rendered above (Guardian only). */
   fullBody: boolean
 }) {
-  const sourceLabel = SOURCE_LABELS[article.sourceId]
+  const sourceLabel = getSourceLabel(article.sourceId)
   return (
     <div className="bg-panel mt-14 flex flex-wrap items-center justify-between gap-6 rounded-lg p-8">
       <div>
@@ -113,7 +113,7 @@ function MoreLikeThis({ articles }: { articles: Article[] }) {
             </div>
             <div>
               <div className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
-                {SOURCE_LABELS[article.sourceId]}
+                {getSourceLabel(article.sourceId)}
               </div>
               <h3 className="group-hover:text-accent mt-1.5 font-serif text-[17px] leading-snug font-medium transition-colors">
                 {article.title}
@@ -180,7 +180,7 @@ export function ArticlePage() {
     )
   }
 
-  const sourceLabel = SOURCE_LABELS[article.sourceId]
+  const sourceLabel = getSourceLabel(article.sourceId)
   // Avoid repeating the standfirst when the provider's longer text is
   // just the description again.
   const extendedText =

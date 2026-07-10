@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { SOURCE_LABELS, type Article } from '../../domain/article'
+import type { Article } from '../../domain/article'
 import { CATEGORY_LABELS } from '../../domain/category'
 import { articlePath } from '../../lib/articleRoute'
 import { formatDate } from '../../lib/formatDate'
+import { getSourceLabel } from '../../services/news/registry'
 
 interface TopPickProps {
   article: Article
@@ -33,7 +34,7 @@ export function TopPick({ article }: TopPickProps) {
             </svg>
             Top pick for you
           </span>
-          <span className="text-stone-400">· {SOURCE_LABELS[article.sourceId]}</span>
+          <span className="text-stone-400">· {getSourceLabel(article.sourceId)}</span>
         </div>
 
         <h2 className="text-ink group-hover:text-accent mt-4 font-serif text-2xl leading-[1.15] font-medium tracking-tight transition-colors sm:text-[32px]">

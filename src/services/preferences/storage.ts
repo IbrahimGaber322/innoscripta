@@ -1,6 +1,6 @@
-import { isSourceId, type SourceId } from '../../domain/article'
 import { isCategory, type Category } from '../../domain/category'
 import { DEFAULT_PREFERENCES, type Preferences } from '../../domain/preferences'
+import { isKnownSourceId } from '../news/registry'
 
 /** Versioned so a future shape change can migrate or discard old data. */
 export const PREFERENCES_STORAGE_KEY = 'news-aggregator:prefs:v1'
@@ -28,9 +28,7 @@ export function loadPreferences(): Preferences {
     const record = parsed as Record<string, unknown>
 
     return {
-      sources: asStringArray(record.sources).filter((value): value is SourceId =>
-        isSourceId(value),
-      ),
+      sources: asStringArray(record.sources).filter(isKnownSourceId),
       categories: asStringArray(record.categories).filter((value): value is Category =>
         isCategory(value),
       ),

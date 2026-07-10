@@ -1,6 +1,6 @@
-import { SOURCE_LABELS } from '../../domain/article'
 import { CATEGORY_LABELS } from '../../domain/category'
 import type { Preferences } from '../../domain/preferences'
+import { getSourceLabel } from '../../services/news/registry'
 
 interface Chip {
   key: string
@@ -20,7 +20,7 @@ export function PersonaChips({ preferences }: { preferences: Preferences }) {
     })),
     ...preferences.sources.map((source) => ({
       key: `source-${source}`,
-      label: SOURCE_LABELS[source],
+      label: getSourceLabel(source),
       color: '#44403C',
       border: '#D6D3D1',
     })),

@@ -1,6 +1,7 @@
-import { SOURCE_LABELS, type Article } from '../../domain/article'
+import type { Article } from '../../domain/article'
 import { CATEGORY_LABELS } from '../../domain/category'
 import { formatDate } from '../../lib/formatDate'
+import { getSourceLabel } from '../../services/news/registry'
 
 /** Uppercase source/category line shown above article titles. */
 export function ArticleKicker({
@@ -11,7 +12,7 @@ export function ArticleKicker({
   /** Overrides the category label colour (e.g. a section's accent). */
   accentColor?: string
 }) {
-  const sourceLabel = SOURCE_LABELS[article.sourceId]
+  const sourceLabel = getSourceLabel(article.sourceId)
   // For NewsAPI the article's own source is the underlying outlet
   // (e.g. "TechCrunch"); show it alongside the aggregating source.
   const outlet = article.sourceName !== sourceLabel ? article.sourceName : undefined

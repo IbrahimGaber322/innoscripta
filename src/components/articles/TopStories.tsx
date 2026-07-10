@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
-import { SOURCE_LABELS, type Article } from '../../domain/article'
+import type { Article } from '../../domain/article'
 import { CATEGORY_LABELS } from '../../domain/category'
 import { articlePath } from '../../lib/articleRoute'
 import { formatDate } from '../../lib/formatDate'
+import { getSourceLabel } from '../../services/news/registry'
 import { ArticleImage } from './ArticleImage'
 
 /** Guardian liveblogs end their headline with "— live". */
@@ -11,7 +12,7 @@ function isLiveArticle(article: Article): boolean {
 }
 
 function LeadKicker({ article }: { article: Article }) {
-  const meta = [SOURCE_LABELS[article.sourceId]]
+  const meta = [getSourceLabel(article.sourceId)]
   if (article.category) {
     meta.push(CATEGORY_LABELS[article.category])
   }
@@ -79,7 +80,7 @@ export function TopStories({ lead, latest }: TopStoriesProps) {
                 className="group border-b border-stone-100 py-4.5 last:border-b-0"
               >
                 <div className="text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
-                  {SOURCE_LABELS[article.sourceId]}
+                  {getSourceLabel(article.sourceId)}
                 </div>
                 <h3 className="text-ink group-hover:text-accent mt-1.5 font-serif text-[17.5px] leading-snug font-medium transition-colors">
                   {article.title}

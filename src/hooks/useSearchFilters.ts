@@ -1,8 +1,9 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { isSourceId, type SourceId } from '../domain/article'
+import type { SourceId } from '../domain/article'
 import { isCategory, type Category } from '../domain/category'
 import { isValidISODate } from '../lib/formatDate'
+import { isKnownSourceId } from '../services/news/registry'
 
 /** Search and filter state for the article list. */
 export interface SearchFilters {
@@ -25,7 +26,7 @@ export function parseFilters(params: URLSearchParams): SearchFilters {
   return {
     keyword: params.get('q') ?? '',
     categories: (params.get('categories') ?? '').split(',').filter(isCategory),
-    sourceIds: (params.get('sources') ?? '').split(',').filter(isSourceId),
+    sourceIds: (params.get('sources') ?? '').split(',').filter(isKnownSourceId),
     fromDate: isValidISODate(from) ? from : undefined,
     toDate: isValidISODate(to) ? to : undefined,
   }

@@ -61,6 +61,11 @@ vi.mock('@/services/news/registry', () => {
       selectedIds.length === 0
         ? allSources()
         : allSources().filter((source) => selectedIds.includes(source.id)),
+    getKnownSourceIds: () => allSources().map((source) => source.id),
+    isKnownSourceId: (value: string) =>
+      allSources().some((source) => source.id === value),
+    getSourceLabel: (id: string) =>
+      allSources().find((source) => source.id === id)?.name ?? id,
   }
 })
 

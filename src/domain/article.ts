@@ -1,24 +1,13 @@
 import type { Category } from './category'
 
-/** Identifiers of the news sources bundled with the app. */
-export const SOURCE_IDS = ['newsapi', 'guardian', 'nytimes'] as const
-
-export type SourceId = (typeof SOURCE_IDS)[number]
-
-export function isSourceId(value: string): value is SourceId {
-  return (SOURCE_IDS as readonly string[]).includes(value)
-}
-
 /**
- * Display names for the aggregating sources — the things a user selects in
- * filters and preferences. Distinct from Article.sourceName, which for
- * NewsAPI is the underlying outlet (e.g. "TechCrunch").
+ * Identifier of a news source (e.g. "guardian"). Deliberately a plain string,
+ * not a fixed union: the set of real sources is defined by the registry at
+ * runtime, which keeps the app source-agnostic. Validate an untrusted value
+ * with `isKnownSourceId` from the registry, and resolve a display name with
+ * `getSourceLabel`.
  */
-export const SOURCE_LABELS: Record<SourceId, string> = {
-  newsapi: 'NewsAPI',
-  guardian: 'The Guardian',
-  nytimes: 'The New York Times',
-}
+export type SourceId = string
 
 /** A news article normalized to a single shape, regardless of provider. */
 export interface Article {

@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { SOURCE_LABELS, type Article } from '../../domain/article'
+import type { Article } from '../../domain/article'
 import { articlePath } from '../../lib/articleRoute'
+import { getSourceLabel } from '../../services/news/registry'
 
 interface TopHeadlinesProps {
   articles: Article[]
@@ -38,7 +39,7 @@ export function TopHeadlines({ articles }: TopHeadlinesProps) {
                   {article.title}
                 </span>
                 <span className="mt-1.5 block text-[11px] font-semibold tracking-widest text-stone-400 uppercase">
-                  {article.sourceName || SOURCE_LABELS[article.sourceId]}
+                  {article.sourceName || getSourceLabel(article.sourceId)}
                 </span>
               </span>
             </Link>
