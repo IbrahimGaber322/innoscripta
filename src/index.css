@@ -12,6 +12,19 @@
   --color-accent: #c2410c;
   --color-panel: #f4f3f0;
   --color-chip: #f0efec;
+
+  /* Indeterminate sweep for the top loading bar shown during a background
+     fetch (see LoadingBar). */
+  --animate-loading-bar: loading-bar 1.1s ease-in-out infinite;
+
+  @keyframes loading-bar {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(250%);
+    }
+  }
 }
 
 body {
