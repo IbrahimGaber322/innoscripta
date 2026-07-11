@@ -2,9 +2,13 @@ const formatter = new Intl.DateTimeFormat('en', {
   month: 'short',
   day: 'numeric',
   year: 'numeric',
+  // Format in UTC so an article's displayed date matches the UTC-based date
+  // filter — otherwise an evening-UTC story reads as "the next day" for users
+  // ahead of UTC, appearing to fall outside a "to" filter it actually honors.
+  timeZone: 'UTC',
 })
 
-/** "2026-07-03T12:00:00Z" → "Jul 3, 2026"; falls back to the raw string. */
+/** "2026-07-03T12:00:00Z" → "Jul 3, 2026" (UTC); falls back to the raw string. */
 export function formatDate(isoDate: string): string {
   const timestamp = Date.parse(isoDate)
   return Number.isNaN(timestamp) ? isoDate : formatter.format(timestamp)
