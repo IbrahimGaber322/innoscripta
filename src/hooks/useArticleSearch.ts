@@ -1,5 +1,6 @@
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
+import type { Category } from '../domain/category'
 import {
   fetchAcrossCategories,
   INITIAL_PAGE_PARAM,
@@ -10,12 +11,36 @@ import type { SearchFilters } from './useSearchFilters'
 
 const PAGE_SIZE = 12
 
+/**
+ * Topics the bare front page fans out across, so the magazine sections are
+ * reliably populated even when the raw "latest" feed skews to breaking news.
+ * Kept to four to stay within the providers' free-tier rate limits (notably
+ * the NYT's ~5 requests/minute).
+ */
+const FRONT_PAGE_CATEGORIES: Category[] = ['world', 'business', 'technology', 'sports']
+
 /** Infinite-scrolling aggregated article search for a set of filters. */
 export function useArticleSearch(filters: SearchFilters) {
   const sources = useMemo(
     () => getEffectiveSources(filters.sourceIds),
     [filters.sourceIds],
   )
+
+  // On the unfiltered front page, fan out across a fixed spread of topics so
+  // each section has content; any active filter fetches exactly what the user
+  // asked for (a flat, relevance/date-appropriate list).
+  const isFrontPage =
+    !filters.keyword &&
+    filters.categories.length === 0 &&
+    filters.sourceIds.length === 0 &&
+    !filters.fromDate &&
+    !filters.toDate
+  const categories =
+    filters.categories.length > 0
+      ? filters.categories
+      : isFrontPage
+        ? FRONT_PAGE_CATEGORIES
+        : []
 
   return useInfiniteQuery({
     queryKey: ['articles', filters],
@@ -28,7 +53,7 @@ export function useArticleSearch(filters: SearchFilters) {
           page: pageParam.page,
           pageSize: PAGE_SIZE,
         },
-        filters.categories,
+        categories,
         sources,
         signal,
         pageParam.cursors,
