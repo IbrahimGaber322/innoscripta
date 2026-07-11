@@ -34,7 +34,10 @@ export interface ForYouFeed {
  * so following "John" matches "John Roberts" but not "Johnson".
  */
 export function matchesFollowedAuthor(article: Article, authors: string[]): boolean {
-  if (!article.author) {
+  // Defensive: an adapter should map `author` to a plain string, but a
+  // misbehaving one (e.g. handing back a provider's raw array) must not crash
+  // the whole feed — treat anything non-string as "no byline".
+  if (typeof article.author !== 'string' || !article.author) {
     return false
   }
   const byline = article.author.toLowerCase()

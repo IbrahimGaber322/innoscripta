@@ -43,4 +43,10 @@ describe('matchesFollowedAuthor', () => {
   it('never matches articles without a byline', () => {
     expect(matchesFollowedAuthor(articleBy(undefined), ['Alex Hern'])).toBe(false)
   })
+
+  it('does not crash on a non-string byline from a misbehaving adapter', () => {
+    // e.g. a provider returns author as a raw array; treat it as no byline.
+    const bad = { ...articleBy(undefined), author: ['Alex Hern'] } as unknown as Article
+    expect(matchesFollowedAuthor(bad, ['Alex Hern'])).toBe(false)
+  })
 })
