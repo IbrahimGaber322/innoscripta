@@ -8,7 +8,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-116%20passing-1B7A4E?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-134%20passing-1B7A4E?style=flat-square)
 ![Docker](https://img.shields.io/badge/Docker-multi--stage-2496ED?style=flat-square&logo=docker&logoColor=white)
 
 ![NewsHub front page](docs/home.png)
@@ -64,7 +64,7 @@ least three data sources**, a **Dockerized** build with clear docs, and clean
 **DRY / KISS / SOLID** code.
 
 Rather than stopping at a functional list of cards, NewsHub treats the news
-domain seriously: a magazine front page for browsing, a relevance-first flat
+domain seriously: a magazine front page for browsing, a flat, on-topic
 list for searching, a segmented "For You" briefing for personalization, and an
 in-app reader for the articles themselves — all sharing one editorial design
 language.
@@ -134,8 +134,8 @@ language.
 - **Magazine front page** — browsing (no keyword) is laid out like a
   newspaper: a lead-story package beside a rail of latest headlines, per-category
   sections under coloured rules, a dark "Top headlines" box, and an "Earlier
-  this week" tail. An active search collapses this to a flat, relevance-first
-  list.
+  this week" tail. A keyword, category, or date filter collapses this to a flat
+  list; a source filter keeps the sections.
 - **Infinite scroll** — both feeds load more as you approach the bottom
   (an `IntersectionObserver` sentinel drives `fetchNextPage`), with an
   "all caught up" divider at the end. No "load more" button.
@@ -158,7 +158,7 @@ language.
 | Styling              | Tailwind CSS v4 (`@theme` tokens, no PostCSS)               |
 | Server state         | TanStack Query v5 (infinite queries, caching, cancellation) |
 | Sanitization         | DOMPurify (Guardian article bodies)                         |
-| Testing              | Vitest + React Testing Library (116 tests)                  |
+| Testing              | Vitest + React Testing Library (134 tests)                  |
 | Linting / formatting | oxlint + Prettier                                           |
 | Runtime image        | nginx (Alpine), served from a multi-stage Docker build      |
 
@@ -323,9 +323,10 @@ fan-out; it was added later via `npm run new:source`, touching no other code._
    cannot honor the query** (per capabilities) or lack a key.
 3. Each eligible source's adapter translates the query into a provider request,
    fetches, and maps the response into `Article[]`.
-4. The aggregator merges the pages, drops duplicates, orders them
-   (**relevance-first for searches, newest-first for browsing**), and returns
-   any per-source errors alongside the results.
+4. The aggregator merges the pages, drops duplicates, and presents the merged
+   set **newest-first** — each provider is already asked for its most relevant
+   matches on a search, so the results are on-topic before ordering — and
+   returns any per-source errors alongside the results.
 5. TanStack Query caches the page (5 min), dedupes in-flight requests, and
    drives pagination for infinite scroll.
 
@@ -463,7 +464,7 @@ product with no self-service access; **BBC News** has no official public API.
 | **Front page fans across a fixed topic spread**         | A single "latest" query skews to whatever's breaking, leaving the magazine sections empty. The unfiltered home instead fetches a small set of topics (world, business, technology, sports) so each section reliably has content — kept to four to respect free-tier rate limits.                 |
 | **Aggregator uses `Promise.allSettled`**                | One slow, rate-limited, or unkeyed provider must never break the page. Failures are isolated into per-source error chips (graceful degradation).                                                                                                                                                 |
 | **Cross-source dedupe by URL + title**                  | NewsAPI re-indexes Guardian and NYT content, so the same story arrives twice; dedupe keeps the feed clean.                                                                                                                                                                                       |
-| **Relevance-first for search, newest-first for browse** | A searcher wants the most relevant match; a browser wants the latest news. The aggregator orders each mode to match intent (searches keep provider relevance ranking, then break ties toward newer).                                                                                             |
+| **On-topic search, newest-first ordering**              | A keyword search asks each provider for its most relevant matches (not its latest), so the merged set is already on-topic; the aggregator then presents it newest-first. Browsing fetches the latest directly.                                                                                   |
 | **A normalized `Article` domain type**                  | Gives the UI one stable shape to render, decoupled from any provider's JSON.                                                                                                                                                                                                                     |
 
 ### State & data fetching decisions
@@ -482,7 +483,7 @@ product with no self-service access; **BBC News** has no official public API.
 | Decision                                                | Why                                                                                                                                                                                                                                                                                                        |
 | ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Editorial / magazine design language**                | A news product should read like one. Newsreader (serif) for headlines + Instrument Sans for UI, a warm paper palette, and coloured category rules make the content feel considered rather than like a generic card grid.                                                                                   |
-| **Magazine front page vs. flat search list**            | Browsing and searching are different intents: browsing gets a hierarchical front page (lead package, sections, top box); an active search collapses to a flat, relevance-first list where ranking matters most.                                                                                            |
+| **Magazine front page vs. flat search list**            | Browsing and searching are different intents: browsing gets a hierarchical front page (lead package, sections, top box); a keyword, category, or date filter collapses to a flat list of the providers' best matches (a source filter keeps the magazine).                                                 |
 | **Author preferences _partition_ rather than _filter_** | No free tier supports querying by author, and any single result page rarely contains a specific byline — a hard filter would usually render an empty feed. Instead, followed authors' articles are pinned above the rest.                                                                                  |
 | **Settings affect only "For You", not "Home"**          | Home is the neutral, everything view; For You is the personalized one. Keeping preferences scoped to For You keeps each page's purpose predictable.                                                                                                                                                        |
 | **Custom, themed date picker** (not the native input)   | The native control can't match the editorial theme, can't be capped at "today" consistently across browsers, and is inconsistent on mobile. The custom picker is theme-matched, caps at today, is keyboard-navigable (`role="grid"`, roving tabindex), and clamps itself to the viewport on small screens. |
@@ -525,7 +526,7 @@ product with no self-service access; **BBC News** has no official public API.
   provider — the open–closed principle in practice, demonstrated above.
 - **Trustworthy state.** Filters in the URL and validated, versioned preference
   storage make the app shareable, refresh-proof, and forward-compatible.
-- **Tested where it counts.** 116 tests cover the mappers, request building, the
+- **Tested where it counts.** 134 tests cover the mappers, request building, the
   aggregator's merge/dedupe/order/skip logic, storage, and URL state.
 - **Accessible details.** Keyboard-navigable date picker with focus management,
   semantic roles, and consistent affordances.
@@ -534,7 +535,7 @@ product with no self-service access; **BBC News** has no official public API.
 
 ## Testing
 
-`npm run test` runs **116 tests across 18 files**, covering the parts with real
+`npm run test` runs **134 tests across 22 files**, covering the parts with real
 logic:
 
 - each adapter's **mapper** against realistic response fixtures (removed
