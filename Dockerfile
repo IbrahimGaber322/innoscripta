@@ -35,8 +35,10 @@ COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
-# Report unhealthy if nginx stops serving the app.
+# Report unhealthy if nginx stops serving the app. Probe 127.0.0.1, not
+# localhost: in the container localhost resolves to ::1 (IPv6) first, but
+# nginx's `listen 80` binds IPv4 only, so a localhost probe is refused.
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost/healthz || exit 1
+    CMD wget --quiet --tries=1 --spider http://127.0.0.1/healthz || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
