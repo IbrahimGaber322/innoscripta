@@ -2,18 +2,18 @@
 
 # NewsHub
 
-**A news aggregator that pulls headlines from The Guardian, The New York Times, and NewsAPI into one clean, editorial reading experience — with keyword search, rich filtering, and a personalized feed.**
+**A news aggregator that pulls headlines from The Guardian, The New York Times, NewsAPI, and NewsData into one clean, editorial reading experience — with keyword search, rich filtering, and a personalized feed.**
 
 ![React](https://img.shields.io/badge/React-19-149ECA?style=flat-square&logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat-square&logo=vite&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38BDF8?style=flat-square&logo=tailwindcss&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-96%20passing-1B7A4E?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-116%20passing-1B7A4E?style=flat-square)
 ![Docker](https://img.shields.io/badge/Docker-multi--stage-2496ED?style=flat-square&logo=docker&logoColor=white)
 
 ![NewsHub front page](docs/home.png)
 
-<sub>The editorial front page. The "Some sources are unavailable" panel is not a bug — it is the app's **graceful degradation** at work: NewsAPI's free tier only allows browser requests from localhost, so when it is rate‑limited the other sources keep rendering and the affected one becomes a status chip.</sub>
+<sub>The editorial front page: a lead-story package beside the day's latest headlines, then per-topic sections and an "Earlier this week" tail — assembled from four providers and laid out like a newspaper.</sub>
 
 </div>
 
@@ -55,7 +55,7 @@
 
 ## Overview
 
-NewsHub is a single-page React application that aggregates articles from three
+NewsHub is a single-page React application that aggregates articles from four
 independent news providers and presents them as one coherent, newspaper-styled
 product. It was built against a front-end brief with seven requirements:
 keyword **search** with date/category/source **filtering**, a **personalized
@@ -71,15 +71,15 @@ language.
 
 ## Requirement coverage
 
-| #   | Requirement                                                  | Where it is implemented                                                                             |
-| --- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| 1   | Article search & filtering (keyword, date, category, source) | `SearchBar`, `CategoryTabs`, `FiltersPanel`, `DatePicker`; state in `useSearchFilters` (URL-driven) |
-| 2   | Personalized feed (sources, categories, authors)             | `/for-you` page + `/settings`; `useForYouFeed`, `PreferencesProvider`, `localStorage` persistence   |
-| 3   | Mobile-responsive design                                     | Tailwind breakpoints throughout; hamburger nav, collapsing grids, viewport-clamped date picker      |
-| 4   | React + TypeScript                                           | React 19 + TypeScript in `strict` mode, zero `any`                                                  |
-| 5   | ≥ 3 data sources                                             | NewsAPI.org, The Guardian, The New York Times (adapters in `src/services/news/adapters/`)           |
-| 6   | Dockerized + documentation                                   | Multi-stage `Dockerfile`, `docker-compose.yml`, `nginx.conf`; this README                           |
-| 7   | DRY / KISS / SOLID                                           | Adapter + aggregator + registry pattern, dependency inversion, provider-agnostic domain layer       |
+| #   | Requirement                                                  | Where it is implemented                                                                                                                                                       |
+| --- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Article search & filtering (keyword, date, category, source) | `SearchBar`, `CategoryTabs`, `FiltersPanel`, `DatePicker`; state in `useSearchFilters` (URL-driven)                                                                           |
+| 2   | Personalized feed (sources, categories, authors)             | `/for-you` page + `/settings`; `useForYouFeed`, `PreferencesProvider`, `localStorage` persistence                                                                             |
+| 3   | Mobile-responsive design                                     | Tailwind breakpoints throughout; hamburger nav, collapsing grids, viewport-clamped date picker                                                                                |
+| 4   | React + TypeScript                                           | React 19 + TypeScript in `strict` mode, zero `any`                                                                                                                            |
+| 5   | ≥ 3 data sources                                             | NewsAPI.org, The Guardian, The New York Times — plus NewsData, added via `npm run new:source` to prove the source-agnostic design (adapters in `src/services/news/adapters/`) |
+| 6   | Dockerized + documentation                                   | Multi-stage `Dockerfile`, `docker-compose.yml`, `nginx.conf`; this README                                                                                                     |
+| 7   | DRY / KISS / SOLID                                           | Adapter + aggregator + registry pattern, dependency inversion, provider-agnostic domain layer                                                                                 |
 
 ## Screenshots
 
@@ -158,7 +158,7 @@ language.
 | Styling              | Tailwind CSS v4 (`@theme` tokens, no PostCSS)               |
 | Server state         | TanStack Query v5 (infinite queries, caching, cancellation) |
 | Sanitization         | DOMPurify (Guardian article bodies)                         |
-| Testing              | Vitest + React Testing Library (96 tests)                   |
+| Testing              | Vitest + React Testing Library (116 tests)                  |
 | Linting / formatting | oxlint + Prettier                                           |
 | Runtime image        | nginx (Alpine), served from a multi-stage Docker build      |
 
@@ -174,25 +174,27 @@ language.
 ### 1. Get API keys (all free)
 
 The app runs with **any subset** of keys — sources without a key are skipped
-and flagged in the UI — but all three give the full experience.
+and flagged in the UI — but all four give the full experience.
 
 | Provider       | Register at                                     | Notes                                                                                                            |
 | -------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | NewsAPI.org    | <https://newsapi.org/register>                  | The free _Developer_ plan only allows browser requests **from localhost** — fine for local dev and local Docker. |
 | The Guardian   | <https://open-platform.theguardian.com/access/> | Register for a _developer_ key; it arrives by email.                                                             |
 | New York Times | <https://developer.nytimes.com/get-started>     | Create an app and **enable the "Article Search API"** for it.                                                    |
+| NewsData.io    | <https://newsdata.io/register>                  | Free tier; the key looks like `pub_…`.                                                                           |
 
 ### 2. Configure the environment
 
 ```bash
 cp .env.example .env
-# then fill in the three VITE_* keys
+# then fill in the four VITE_* keys
 ```
 
 ```dotenv
 VITE_NEWSAPI_API_KEY=your_key
 VITE_GUARDIAN_API_KEY=your_key
 VITE_NYT_API_KEY=your_key
+VITE_PUB_NEWSDATA_API_KEY=your_key
 ```
 
 ### 3. Run locally
@@ -216,7 +218,8 @@ docker compose up --build     # http://localhost:8080
 docker build -t news-aggregator \
   --build-arg VITE_NEWSAPI_API_KEY=your_key \
   --build-arg VITE_GUARDIAN_API_KEY=your_key \
-  --build-arg VITE_NYT_API_KEY=your_key .
+  --build-arg VITE_NYT_API_KEY=your_key \
+  --build-arg VITE_PUB_NEWSDATA_API_KEY=your_key .
 
 docker run --rm -p 8080:80 news-aggregator
 ```
@@ -349,7 +352,8 @@ src/
 │   │   └── adapters/
 │   │       ├── newsapi/       # newsApiSource.ts · mapArticle.ts · types.ts
 │   │       ├── guardian/
-│   │       └── nytimes/
+│   │       ├── nytimes/
+│   │       └── newsdata/      # cursor-paginated; scaffolded via new:source
 │   └── preferences/        # Validated localStorage persistence
 ├── context/               # PreferencesProvider (preferences state)
 ├── hooks/                 # useSearchFilters, useForYouFeed, useInfiniteScroll, …
@@ -430,30 +434,34 @@ Every non-trivial decision, and why it was made.
 ### Choice of data sources
 
 The brief lists seven sources and asks for at least three. Three of the seven
-have free, self-service public APIs, and those are the three used here.
+have free, self-service public APIs, and those are the three chosen from the
+list — with a fourth (NewsData) added afterwards to demonstrate extensibility.
 
-| Source                                  | Why it was chosen                                                                                                                               |
-| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **NewsAPI.org**                         | Aggregates 150k+ outlets; supports keyword, date, and category queries. (The brief's "NewsAPI" and "NewsAPI.org" entries are the same product.) |
-| **The Guardian** (Open Platform)        | The best-behaved API of the set — keyword, section, and date filters all compose in a single request.                                           |
-| **The New York Times** (Article Search) | Full-archive keyword search with date and section filtering.                                                                                    |
+| Source                                  | Why it was chosen                                                                                                                                                                         |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **NewsAPI.org**                         | Aggregates 150k+ outlets; supports keyword, date, and category queries. (The brief's "NewsAPI" and "NewsAPI.org" entries are the same product.)                                           |
+| **The Guardian** (Open Platform)        | The best-behaved API of the set — keyword, section, and date filters all compose in a single request.                                                                                     |
+| **The New York Times** (Article Search) | Full-archive keyword search with date and section filtering.                                                                                                                              |
+| **NewsData.io** (Latest)                | Added _after_ the fact via `npm run new:source` — a fourth provider with **cursor-based pagination** — to prove that a new source drops in without touching the aggregator, hooks, or UI. |
 
-The remaining options were ruled out **deliberately**: **OpenNews** is a
-journalism community, not an article API; **NewsCred** is an enterprise product
-with no self-service access; **BBC News** has no official public API.
+The remaining options from the brief were ruled out **deliberately**: **OpenNews**
+is a journalism community, not an article API; **NewsCred** is an enterprise
+product with no self-service access; **BBC News** has no official public API.
 
 ### Data layer decisions
 
-| Decision                                                | Why                                                                                                                                                                                                                                                       |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Source-adapter pattern** (one adapter per provider)   | Isolates every provider's request format and response quirks behind a single interface, so the rest of the app is provider-agnostic (SOLID: single responsibility, dependency inversion).                                                                 |
-| **`HttpNewsSource` abstract base class**                | Every HTTP/JSON provider shares the same credential + fetch → map flow. The base owns it (template method); a source implements only `buildRequest` + `parseResponse`, so adding one means writing intent, not boilerplate.                               |
-| **Registry-driven identity (no hardcoded source list)** | `SourceId` is a plain string; the installed sources define what's valid (`isKnownSourceId`) and how it's labelled (`getSourceLabel`) at runtime. Nothing outside an adapter names a provider, so the app stays source-agnostic and scalable.              |
-| **Capability declaration per source**                   | Providers genuinely differ (NewsAPI can't combine date + category; supports fewer categories). Declaring capabilities lets the aggregator send only queries a source can honor — honest results instead of a lowest-common-denominator or silent empties. |
-| **Aggregator uses `Promise.allSettled`**                | One slow, rate-limited, or unkeyed provider must never break the page. Failures are isolated into per-source error chips (graceful degradation).                                                                                                          |
-| **Cross-source dedupe by URL + title**                  | NewsAPI re-indexes Guardian and NYT content, so the same story arrives twice; dedupe keeps the feed clean.                                                                                                                                                |
-| **Relevance-first for search, newest-first for browse** | A searcher wants the most relevant match; a browser wants the latest news. The aggregator orders each mode to match intent (searches keep provider relevance ranking, then break ties toward newer).                                                      |
-| **A normalized `Article` domain type**                  | Gives the UI one stable shape to render, decoupled from any provider's JSON.                                                                                                                                                                              |
+| Decision                                                | Why                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Source-adapter pattern** (one adapter per provider)   | Isolates every provider's request format and response quirks behind a single interface, so the rest of the app is provider-agnostic (SOLID: single responsibility, dependency inversion).                                                                                                        |
+| **`HttpNewsSource` abstract base class**                | Every HTTP/JSON provider shares the same credential + fetch → map flow. The base owns it (template method); a source implements only `buildRequest` + `parseResponse`, so adding one means writing intent, not boilerplate.                                                                      |
+| **Registry-driven identity (no hardcoded source list)** | `SourceId` is a plain string; the installed sources define what's valid (`isKnownSourceId`) and how it's labelled (`getSourceLabel`) at runtime. Nothing outside an adapter names a provider, so the app stays source-agnostic and scalable.                                                     |
+| **Capability declaration per source**                   | Providers genuinely differ (NewsAPI can't combine date + category; supports fewer categories). Declaring capabilities lets the aggregator send only queries a source can honor — honest results instead of a lowest-common-denominator or silent empties.                                        |
+| **Offset _and_ cursor pagination**                      | Most providers page by number; NewsData pages by an opaque `nextPage` token. A `pagination` capability lets the aggregator thread a per-(category, source) cursor, mark finished sources done, and retry a failed one — so mixed offset/cursor sources paginate without duplicates or dead ends. |
+| **Front page fans across a fixed topic spread**         | A single "latest" query skews to whatever's breaking, leaving the magazine sections empty. The unfiltered home instead fetches a small set of topics (world, business, technology, sports) so each section reliably has content — kept to four to respect free-tier rate limits.                 |
+| **Aggregator uses `Promise.allSettled`**                | One slow, rate-limited, or unkeyed provider must never break the page. Failures are isolated into per-source error chips (graceful degradation).                                                                                                                                                 |
+| **Cross-source dedupe by URL + title**                  | NewsAPI re-indexes Guardian and NYT content, so the same story arrives twice; dedupe keeps the feed clean.                                                                                                                                                                                       |
+| **Relevance-first for search, newest-first for browse** | A searcher wants the most relevant match; a browser wants the latest news. The aggregator orders each mode to match intent (searches keep provider relevance ranking, then break ties toward newer).                                                                                             |
+| **A normalized `Article` domain type**                  | Gives the UI one stable shape to render, decoupled from any provider's JSON.                                                                                                                                                                                                                     |
 
 ### State & data fetching decisions
 
@@ -502,8 +510,8 @@ with no self-service access; **BBC News** has no official public API.
 
 - **Real domain modelling, not a fetch-and-map demo.** A provider-agnostic
   domain layer and a capability-aware aggregator mean the app handles the _real_
-  differences between three APIs honestly — different categories, different
-  filter combinations, different failure modes.
+  differences between four APIs honestly — different categories, pagination
+  styles (page numbers vs. cursors), filter combinations, and failure modes.
 - **Genuinely resilient.** Per-source failure isolation means a rate-limited or
   down provider degrades to a chip; the page always renders something useful.
 - **Intent-aware UX.** Browsing, searching, and personalization each get a
@@ -514,7 +522,7 @@ with no self-service access; **BBC News** has no official public API.
   provider — the open–closed principle in practice, demonstrated above.
 - **Trustworthy state.** Filters in the URL and validated, versioned preference
   storage make the app shareable, refresh-proof, and forward-compatible.
-- **Tested where it counts.** 96 tests cover the mappers, request building, the
+- **Tested where it counts.** 116 tests cover the mappers, request building, the
   aggregator's merge/dedupe/order/skip logic, storage, and URL state.
 - **Accessible details.** Keyboard-navigable date picker with focus management,
   semantic roles, and consistent affordances.
@@ -523,19 +531,20 @@ with no self-service access; **BBC News** has no official public API.
 
 ## Testing
 
-`npm run test` runs **96 tests across 17 files**, covering the parts with real
+`npm run test` runs **116 tests across 18 files**, covering the parts with real
 logic:
 
 - each adapter's **mapper** against realistic response fixtures (removed
   entries, HTML stripping, image-URL prefixing, byline normalization, both NYT
-  multimedia schemas),
+  multimedia schemas, NewsData's array bylines/categories),
 - each adapter's **request building** (endpoint selection, date reformatting,
   pagination conversion, no key leakage into URLs),
 - the **`HttpNewsSource` base-class contract** (a `FakeSource` proving the
   `buildRequest` → fetch → `parseResponse` flow, credential handling, and header
   passing — doubling as proof that a new source is trivial to add),
 - the **aggregator** (merging, sorting, dedupe, capability skipping, failure
-  isolation),
+  isolation, and **cursor pagination** — token threading, exhaustion, and
+  retry-on-failure across mixed offset/cursor sources),
 - **preferences storage** (round-trip, corruption fallback, invalid-entry
   filtering),
 - **URL filter state** (parsing, validation, round-trip serialization) and
@@ -552,13 +561,17 @@ logic:
   "rate limited" chip.
 - **Category vocabularies differ per provider** and are mapped to a unified set;
   the mapping is intentionally approximate in places (e.g. Guardian `society` →
-  _Health_, NYT `Arts` → _Entertainment_).
+  _Health_, NYT `Arts` → _Entertainment_, NewsData `top` → _General_). NewsData
+  slugs with no clear match fall back to uncategorized.
+- **The front page fetches a fixed four topics** (world, business, technology,
+  sports); it favours predictable, rate-limit-friendly sections over surfacing
+  every possible topic on a given day.
 - **NewsAPI date-only filtering** falls back to a broad keyword because its
   `/everything` endpoint requires a query term.
 - **Selecting many categories multiplies requests** (one per category per
   source), so a large selection can briefly trip the NYT rate limit — it
   degrades to a warning chip while the other sources keep rendering.
 - **"Top headlines" is a per-source capability** (`fetchTopHeadlines`), and of
-  the three bundled providers only NewsAPI exposes a cross-outlet ranking, so
+  the four bundled providers only NewsAPI exposes a cross-outlet ranking, so
   the box shows its biggest stories — not a global, cross-source popularity
   ranking. Any future source that offers one can power the box instead.
