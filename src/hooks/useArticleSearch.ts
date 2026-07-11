@@ -26,19 +26,20 @@ export function useArticleSearch(filters: SearchFilters) {
     [filters.sourceIds],
   )
 
-  // On the unfiltered front page, fan out across a fixed spread of topics so
-  // each section has content; any active filter fetches exactly what the user
-  // asked for (a flat, relevance/date-appropriate list).
-  const isFrontPage =
+  // Fan out across a fixed spread of topics whenever the feed isn't narrowed by
+  // keyword, category, or date — including when the only refinement is a source
+  // filter — so the magazine sections stay populated. A keyword, category, or
+  // date filter instead fetches exactly what the user asked for (a flat,
+  // relevance/date-appropriate list).
+  const spreadAcrossTopics =
     !filters.keyword &&
     filters.categories.length === 0 &&
-    filters.sourceIds.length === 0 &&
     !filters.fromDate &&
     !filters.toDate
   const categories =
     filters.categories.length > 0
       ? filters.categories
-      : isFrontPage
+      : spreadAcrossTopics
         ? FRONT_PAGE_CATEGORIES
         : []
 

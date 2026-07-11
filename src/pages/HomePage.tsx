@@ -63,16 +63,16 @@ export function HomePage() {
     enabled: query.hasNextPage && !query.isFetchingNextPage,
   })
 
-  // The magazine layout (lead package, category sections, "top headlines",
-  // "earlier this week") only makes sense for the unfiltered front page — any
-  // active filter collapses to a flat, filter-appropriate list.
-  const hasAnyFilter =
-    Boolean(filters.keyword) ||
-    filters.categories.length > 0 ||
-    filters.sourceIds.length > 0 ||
-    Boolean(filters.fromDate) ||
-    Boolean(filters.toDate)
-  const showPackage = !hasAnyFilter && articles.length >= 4
+  // The magazine layout (lead package, category sections, "earlier this week")
+  // shows on the front page and when the only refinement is a source filter,
+  // which still fans out across topics. A keyword, category, or date filter
+  // collapses to a flat, filter-appropriate list.
+  const showPackage =
+    !filters.keyword &&
+    filters.categories.length === 0 &&
+    !filters.fromDate &&
+    !filters.toDate &&
+    articles.length >= 4
   const heading = buildHeading(filters)
 
   // Split the browse feed into the package, the category sections (a glimpse
@@ -86,11 +86,14 @@ export function HomePage() {
     return { sections: grouped, earlier: pool.filter((a) => !usedIds.has(a.id)) }
   }, [articles, showPackage])
 
-  // The dark "Top headlines" box only appears on the browse front page. It's a
-  // separate NewsAPI query, so drop any story already shown in the feed above
-  // (matched by URL, since the same story can carry a different id per source).
+  // The dark "Top headlines" box is a separate query from one fixed source that
+  // ignores the source filter, so it only appears on the true front page —
+  // never while a source is selected, or it would surface a filtered-out
+  // source's stories. Drop any story already shown in the feed above (matched by
+  // URL, since the same story can carry a different id per source).
+  const showTopHeadlines = showPackage && filters.sourceIds.length === 0
   const shownUrls = new Set(articles.map((article) => article.url.split('?')[0]))
-  const topHeadlines = (useTopHeadlines(showPackage).data ?? []).filter(
+  const topHeadlines = (useTopHeadlines(showTopHeadlines).data ?? []).filter(
     (article) => !shownUrls.has(article.url.split('?')[0]),
   )
 
