@@ -280,6 +280,9 @@ type. Every provider quirk is absorbed at the edge, in a small adapter.
    /top-headlines
 ```
 
+_A fourth adapter — `NewsdataSource` (cursor-paginated) — plugs into the same
+fan-out; it was added later via `npm run new:source`, touching no other code._
+
 ### The data layer: adapters, aggregator, registry
 
 - **`src/domain/`** — provider-agnostic types the whole app speaks: `Article`,
@@ -287,10 +290,10 @@ type. Every provider quirk is absorbed at the edge, in a small adapter.
   The UI only ever sees these.
 - **`NewsSource.ts`** — the contract every adapter implements. Crucially it
   includes a **capability declaration** (`SourceCapabilities`): which categories
-  a source supports, whether it can filter by date, and whether date and
-  category filters combine in a single request. This lets the aggregator handle
-  provider differences _honestly_ instead of guessing or assuming a lowest
-  common denominator.
+  a source supports, whether it can filter by date, whether date and category
+  filters combine in a single request, and how it paginates (page number vs.
+  cursor). This lets the aggregator handle provider differences _honestly_
+  instead of guessing or assuming a lowest common denominator.
 - **`HttpNewsSource.ts`** — an abstract base class that owns everything every
   HTTP/JSON provider shares: credential storage, `isConfigured()`, and the
   fetch → map flow. A concrete source implements only two hooks — `buildRequest`
@@ -301,7 +304,7 @@ type. Every provider quirk is absorbed at the edge, in a small adapter.
   tests), a pure response-to-domain mapper (`mapArticle.ts`), and raw response
   types (`types.ts`). Mappers absorb every quirk: NewsAPI's `[Removed]` ghost
   entries, Guardian's trailing HTML, NYT's relative image URLs and `"By "`
-  bylines.
+  bylines, and NewsData's array bylines and category slugs.
 - **`aggregator.ts`** — `fetchAggregated` fans a query out to eligible sources
   with `Promise.allSettled`, then merges, dedupes, and orders the results;
   `fetchAcrossCategories` handles multi-category feeds; failures become
