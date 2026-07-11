@@ -21,6 +21,9 @@ export function FiltersPanel({
   hasActiveFilters,
 }: FiltersPanelProps) {
   const today = todayISO()
+  // A source that can't filter by date is excluded once a date range is set,
+  // so grey out its pill to make that visible instead of silent.
+  const dateFilterActive = Boolean(filters.fromDate || filters.toDate)
 
   function toggleSource(sourceId: SearchFilters['sourceIds'][number]) {
     onChange({
@@ -40,6 +43,8 @@ export function FiltersPanel({
             label={source.name}
             checked={filters.sourceIds.includes(source.id)}
             onToggle={() => toggleSource(source.id)}
+            disabled={dateFilterActive && !source.capabilities.dateFilter}
+            disabledReason={`${source.name} can't filter by date, so it's excluded while a date range is set`}
           />
         ))}
       </div>
