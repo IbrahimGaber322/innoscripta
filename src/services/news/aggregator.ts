@@ -148,6 +148,9 @@ export async function fetchAggregated(
     ) {
       // The source cannot filter by this category; skip it rather than
       // returning results that ignore the user's filter.
+    } else if ((query.fromDate || query.toDate) && !source.capabilities.dateFilter) {
+      // The source cannot filter by date at all; skip it rather than returning
+      // latest articles that ignore the requested date range.
     } else if (
       query.category &&
       (query.fromDate || query.toDate) &&

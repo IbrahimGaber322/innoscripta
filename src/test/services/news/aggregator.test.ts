@@ -27,6 +27,7 @@ function makeSource(
   options: {
     configured?: boolean
     categories?: NewsSource['capabilities']['categories']
+    dateFilter?: boolean
     dateFilterWithCategory?: boolean
   } = {},
 ): NewsSource {
@@ -35,7 +36,7 @@ function makeSource(
     name: `${id} source`,
     capabilities: {
       categories: options.categories ?? ['general', 'technology'],
-      dateFilter: true,
+      dateFilter: options.dateFilter ?? true,
       dateFilterWithCategory: options.dateFilterWithCategory ?? true,
     },
     isConfigured: () => options.configured ?? true,
@@ -103,6 +104,24 @@ describe('fetchAggregated', () => {
     ])
 
     expect(result.articles.map((a) => a.id)).toEqual(['political'])
+    expect(result.errors).toEqual([])
+  })
+
+  it('skips a source that cannot filter by date when a date range is set', async () => {
+    const inRange = makeArticle({ id: 'in-range' })
+
+    const result = await fetchAggregated(
+      { ...QUERY, fromDate: '2019-10-01', toDate: '2020-04-30' },
+      [
+        makeSource('newsapi', new Error('should never be called'), {
+          dateFilter: false,
+        }),
+        makeSource('guardian', page([inRange])),
+      ],
+    )
+
+    // The date-incompatible source is skipped silently; only real matches show.
+    expect(result.articles.map((a) => a.id)).toEqual(['in-range'])
     expect(result.errors).toEqual([])
   })
 
