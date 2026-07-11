@@ -8,16 +8,19 @@ import { SourceDigest } from '../components/articles/SourceDigest'
 import { SourceStatusBanner } from '../components/articles/SourceStatusBanner'
 import { TopPick } from '../components/articles/TopPick'
 import { PersonaChips } from '../components/preferences/PersonaChips'
+import { LoadingBar } from '../components/ui/LoadingBar'
 import { CATEGORY_LABELS } from '../domain/category'
 import { useForYouFeed } from '../hooks/useForYouFeed'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { usePreferences } from '../hooks/usePreferences'
 import { formatToday, greeting } from '../lib/formatDate'
+import { isBackgroundRefetching } from '../lib/queryStatus'
 
 export function ForYouPage() {
   const { preferences } = usePreferences()
   const {
     isPending,
+    isFetching,
     followed,
     rest,
     errors,
@@ -31,8 +34,20 @@ export function ForYouPage() {
     enabled: hasNextPage && !isFetchingNextPage,
   })
 
+  // Show the "updating" cue during a background refetch (not the first load or
+  // an infinite-scroll append), mirroring the browse feed.
+  const isRefreshing = isBackgroundRefetching({
+    isFetching,
+    isPending,
+    isFetchingNextPage,
+  })
+
   // The most relevant story leads; a followed author outranks the rest.
   const topPick = followed[0] ?? rest[0]
+
+  // Only dim and mark-busy the feed when there is content to keep visible, so a
+  // refetch with an empty feed never dims the "nothing to show" state.
+  const isRefreshingContent = isRefreshing && Boolean(topPick)
   const followedRail = followed.filter((article) => article.id !== topPick?.id)
   const feedRest = rest.filter((article) => article.id !== topPick?.id)
 
@@ -61,6 +76,7 @@ export function ForYouPage() {
 
   return (
     <div>
+      <LoadingBar active={isRefreshing} />
       <div className="text-[13px] text-stone-500">{formatToday()}</div>
       <h1 className="mt-2 font-serif text-4xl font-medium tracking-tight sm:text-5xl">
         {greeting()}
@@ -93,80 +109,85 @@ export function ForYouPage() {
         <SourceStatusBanner errors={errors} />
       </div>
 
-      {isPending ? (
-        <div className="mt-12">
-          <ArticleCardSkeleton />
-        </div>
-      ) : !topPick ? (
-        <div className="mt-12">
-          <EmptyState
-            title="Nothing to show yet"
-            message="No articles matched your preferences. Sources cover different topics — NewsAPI has no Politics or World, for example — so a narrow source + category combination can come up empty. Widen your picks in Settings, or check that your API keys are configured."
-          >
-            <Link
-              to="/settings"
-              className="bg-ink text-paper hover:bg-accent inline-block rounded-full px-6 py-2.5 text-sm font-semibold transition-colors"
-            >
-              Open Settings
-            </Link>
-          </EmptyState>
-        </div>
-      ) : (
-        <>
-          <div className="mt-10">
-            <TopPick article={topPick} />
+      <div
+        className={`transition-opacity duration-200 ${isRefreshingContent ? 'opacity-60' : ''}`}
+        aria-busy={isRefreshingContent}
+      >
+        {isPending ? (
+          <div className="mt-12">
+            <ArticleCardSkeleton />
           </div>
-
-          {followedRail.length > 0 && (
-            <section className="mt-14">
-              <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
-                From authors you follow
-              </h2>
-              <ArticleGrid articles={followedRail} />
-            </section>
-          )}
-
-          {topicCategory && topicArticles.length > 0 && (
-            <CategorySection
-              category={topicCategory}
-              articles={topicArticles}
-              title={`Because you follow ${CATEGORY_LABELS[topicCategory]}`}
-              actionLabel="Manage topics"
-              actionTo="/settings"
-            />
-          )}
-
-          {digests.length > 0 && (
-            <div className="mt-14 grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-2">
-              {digests.map((digest) => (
-                <SourceDigest
-                  key={digest.sourceId}
-                  sourceId={digest.sourceId}
-                  articles={digest.items}
-                />
-              ))}
+        ) : !topPick ? (
+          <div className="mt-12">
+            <EmptyState
+              title="Nothing to show yet"
+              message="No articles matched your preferences. Sources cover different topics — NewsAPI has no Politics or World, for example — so a narrow source + category combination can come up empty. Widen your picks in Settings, or check that your API keys are configured."
+            >
+              <Link
+                to="/settings"
+                className="bg-ink text-paper hover:bg-accent inline-block rounded-full px-6 py-2.5 text-sm font-semibold transition-colors"
+              >
+                Open Settings
+              </Link>
+            </EmptyState>
+          </div>
+        ) : (
+          <>
+            <div className="mt-10">
+              <TopPick article={topPick} />
             </div>
-          )}
 
-          {moreArticles.length > 0 && (
-            <section className="mt-14">
-              <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
-                More from your interests
-              </h2>
-              <ArticleGrid articles={moreArticles} />
-            </section>
-          )}
+            {followedRail.length > 0 && (
+              <section className="mt-14">
+                <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
+                  From authors you follow
+                </h2>
+                <ArticleGrid articles={followedRail} />
+              </section>
+            )}
 
-          <div ref={sentinelRef} className="h-px" aria-hidden="true" />
-          <FeedFooter
-            isLoadingMore={isFetchingNextPage}
-            hasMore={hasNextPage}
-            hasItems={Boolean(topPick)}
-            loadingLabel="Personalizing more stories"
-            doneLabel="That's everything from your sources today"
-          />
-        </>
-      )}
+            {topicCategory && topicArticles.length > 0 && (
+              <CategorySection
+                category={topicCategory}
+                articles={topicArticles}
+                title={`Because you follow ${CATEGORY_LABELS[topicCategory]}`}
+                actionLabel="Manage topics"
+                actionTo="/settings"
+              />
+            )}
+
+            {digests.length > 0 && (
+              <div className="mt-14 grid grid-cols-1 gap-x-16 gap-y-12 md:grid-cols-2">
+                {digests.map((digest) => (
+                  <SourceDigest
+                    key={digest.sourceId}
+                    sourceId={digest.sourceId}
+                    articles={digest.items}
+                  />
+                ))}
+              </div>
+            )}
+
+            {moreArticles.length > 0 && (
+              <section className="mt-14">
+                <h2 className="mb-6 border-t border-stone-200 pt-3.5 font-serif text-[27px] font-medium tracking-tight">
+                  More from your interests
+                </h2>
+                <ArticleGrid articles={moreArticles} />
+              </section>
+            )}
+
+            <div ref={sentinelRef} className="h-px" aria-hidden="true" />
+            <FeedFooter
+              isLoadingMore={isFetchingNextPage}
+              hasMore={hasNextPage}
+              hasItems={Boolean(topPick)}
+              loadingLabel="Personalizing more stories"
+              doneLabel="That's everything from your sources today"
+            />
+          </>
+        )}
+      </div>
     </div>
   )
 }

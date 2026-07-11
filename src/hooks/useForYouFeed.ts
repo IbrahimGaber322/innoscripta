@@ -18,6 +18,8 @@ const MAX_FEED_CATEGORIES = 4
 
 export interface ForYouFeed {
   isPending: boolean
+  /** Any request in flight, including a background refetch of loaded data. */
+  isFetching: boolean
   /** Articles by followed authors, pinned above the rest. */
   followed: Article[]
   rest: Article[]
@@ -113,6 +115,7 @@ export function useForYouFeed(): ForYouFeed {
 
   return {
     isPending: query.isPending,
+    isFetching: query.isFetching,
     followed,
     rest,
     errors: merged.errors,
