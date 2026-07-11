@@ -1,4 +1,4 @@
-/** Raw shapes returned by the NewsData API. TODO: match the real response. */
+/** Raw shapes returned by the NewsData API. */
 
 export interface NewsdataRawArticle {
   article_id: string
