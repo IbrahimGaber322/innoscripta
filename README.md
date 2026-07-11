@@ -215,13 +215,13 @@ docker compose up --build     # http://localhost:8080
 **With plain Docker** (pass keys as build args):
 
 ```bash
-docker build -t news-aggregator \
+docker build -t newshub \
   --build-arg VITE_NEWSAPI_API_KEY=your_key \
   --build-arg VITE_GUARDIAN_API_KEY=your_key \
   --build-arg VITE_NYT_API_KEY=your_key \
   --build-arg VITE_NEWSDATA_API_KEY=your_key .
 
-docker run --rm -p 8080:80 news-aggregator
+docker run --rm -p 8080:80 newshub
 ```
 
 The image is a **multi-stage build**: Node compiles the app, then nginx (Alpine)
