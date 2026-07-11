@@ -2,7 +2,12 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { usePreferences } from './usePreferences'
 import type { Article } from '../domain/article'
-import { fetchAcrossCategories, mergeAggregatedPages } from '../services/news/aggregator'
+import {
+  fetchAcrossCategories,
+  INITIAL_PAGE_PARAM,
+  mergeAggregatedPages,
+  nextPageParam,
+} from '../services/news/aggregator'
 import type { SourceError } from '../services/news/NewsSource'
 import { getEffectiveSources } from '../services/news/registry'
 
@@ -72,14 +77,15 @@ export function useForYouFeed(): ForYouFeed {
     queryKey: ['for-you', preferences.sources, preferred],
     queryFn: ({ pageParam, signal }) =>
       fetchAcrossCategories(
-        { page: pageParam, pageSize: FEED_PAGE_SIZE },
+        { page: pageParam.page, pageSize: FEED_PAGE_SIZE },
         preferred,
         sources,
         signal,
+        pageParam.cursors,
+        pageParam.done,
       ),
-    initialPageParam: 1,
-    getNextPageParam: (lastPage, allPages) =>
-      lastPage.hasMore ? allPages.length + 1 : undefined,
+    initialPageParam: INITIAL_PAGE_PARAM,
+    getNextPageParam: nextPageParam,
   })
 
   // Merge + partition only when the loaded pages or followed authors change.

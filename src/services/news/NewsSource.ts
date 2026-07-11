@@ -13,6 +13,13 @@ export interface SourceCapabilities {
   dateFilter: boolean
   /** Whether date and category filters can be combined in one request. */
   dateFilterWithCategory: boolean
+  /**
+   * How the source paginates. `'offset'` (the default when omitted) uses the
+   * numeric `ArticleQuery.page`. `'cursor'` uses an opaque continuation token:
+   * the adapter reads `ArticleQuery.cursor` and returns `ArticlePage.nextCursor`,
+   * and the aggregator threads the token from one page to the next.
+   */
+  pagination?: 'offset' | 'cursor'
 }
 
 /** A single article resolved by id, with the full body where available. */

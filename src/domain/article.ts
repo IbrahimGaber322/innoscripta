@@ -45,6 +45,13 @@ export interface ArticleQuery {
   toDate?: string
   /** 1-based; adapters convert for providers that paginate differently. */
   page: number
+  /**
+   * Opaque continuation token for cursor-paginated sources (e.g. Newsdata's
+   * `nextPage`). Set by the aggregator from the previous page's `nextCursor`;
+   * undefined on the first page. Offset-paginated sources ignore it and use
+   * `page` instead. See `SourceCapabilities.pagination`.
+   */
+  cursor?: string
   /** Advisory; providers with fixed page sizes may ignore it. */
   pageSize: number
 }
@@ -54,6 +61,12 @@ export interface ArticlePage {
   articles: Article[]
   totalResults: number
   hasMore: boolean
+  /**
+   * Continuation token for the next page, for cursor-paginated sources. The
+   * aggregator feeds it back as the next query's `cursor`. Offset sources omit
+   * it and signal continuation through `hasMore` alone.
+   */
+  nextCursor?: string
 }
 
 /** Sort comparator: newest publication date first; unparsable dates last. */

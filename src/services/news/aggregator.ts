@@ -11,6 +11,53 @@ export interface AggregatedPage {
   errors: SourceError[]
   /** True while at least one source has more pages. */
   hasMore: boolean
+  /**
+   * Continuation tokens for the next page, keyed per (category, source) cell —
+   * only for cursor-paginated sources. Fed back as the next page's cursors.
+   */
+  nextCursors: Record<string, string>
+  /**
+   * Cells whose source has reached its end (offset source with no more pages,
+   * or cursor source with no next token). Carried forward so a finished source
+   * is not re-queried on later pages — which would waste requests and, for a
+   * page-clamping API, re-append duplicate articles.
+   */
+  nextDone: Record<string, true>
+}
+
+/**
+ * Pagination state for the infinite feed: a shared page number for
+ * offset-paginated sources, a per-cell continuation token for cursor-paginated
+ * ones, and the set of cells that have finished (see `cellKey`).
+ */
+export interface PageParam {
+  page: number
+  cursors: Record<string, string>
+  done: Record<string, true>
+}
+
+export const INITIAL_PAGE_PARAM: PageParam = { page: 1, cursors: {}, done: {} }
+
+/** Builds the next infinite-query page param, or stops when nothing has more. */
+export function nextPageParam(
+  lastPage: AggregatedPage,
+  allPages: AggregatedPage[],
+): PageParam | undefined {
+  return lastPage.hasMore
+    ? {
+        page: allPages.length + 1,
+        cursors: lastPage.nextCursors,
+        done: lastPage.nextDone,
+      }
+    : undefined
+}
+
+/**
+ * A pagination cell is one (category, source) pair: the same cursor source
+ * queried for two categories keeps two independent continuation tokens.
+ */
+function cellKey(category: Category | undefined, sourceId: string): string {
+  return `${category ?? ''}::${sourceId}`
 }
 
 /**
@@ -54,6 +101,9 @@ export function mergeAggregatedPages(pages: AggregatedPage[]): AggregatedPage {
     articles: dedupeArticles(pages.flatMap((page) => page.articles)).sort(byNewestFirst),
     errors: [...errorsBySource.values()],
     hasMore: pages.some((page) => page.hasMore),
+    // Cell keys are namespaced by category, so per-category maps never collide.
+    nextCursors: Object.assign({}, ...pages.map((page) => page.nextCursors)),
+    nextDone: Object.assign({}, ...pages.map((page) => page.nextDone)),
   }
 }
 
@@ -79,6 +129,8 @@ export async function fetchAggregated(
   query: ArticleQuery,
   sources: NewsSource[],
   signal?: AbortSignal,
+  cursors: Record<string, string> = {},
+  done: Record<string, true> = {},
 ): Promise<AggregatedPage> {
   const errors: SourceError[] = []
   const eligible: NewsSource[] = []
@@ -103,24 +155,59 @@ export async function fetchAggregated(
     ) {
       // The source cannot combine date and category filters; skip it
       // rather than silently dropping the date constraint.
+    } else if (done[cellKey(query.category, source.id)]) {
+      // This source already reached the end of this cell on an earlier page.
+      // Re-querying it would waste a request and, for a page-clamping API,
+      // re-append the same articles.
     } else {
       eligible.push(source)
     }
   }
 
   const settled = await Promise.allSettled(
-    eligible.map((source) => source.fetchArticles(query, signal)),
+    eligible.map((source) => {
+      const sourceQuery =
+        source.capabilities.pagination === 'cursor'
+          ? { ...query, cursor: cursors[cellKey(query.category, source.id)] }
+          : query
+      return source.fetchArticles(sourceQuery, signal)
+    }),
   )
 
   const articles: Article[] = []
+  const nextCursors: Record<string, string> = {}
+  // Carry forward cells finished on earlier pages so they stay skipped.
+  const nextDone: Record<string, true> = { ...done }
   let hasMore = false
 
   settled.forEach((result, index) => {
+    const source = eligible[index]
+    const key = cellKey(query.category, source.id)
+    const isCursor = source.capabilities.pagination === 'cursor'
+
     if (result.status === 'fulfilled') {
       articles.push(...result.value.articles)
-      hasMore = hasMore || result.value.hasMore
+      if (isCursor) {
+        // A cursor source can only continue if it handed back a token.
+        if (result.value.nextCursor) {
+          nextCursors[key] = result.value.nextCursor
+          hasMore = true
+        } else {
+          nextDone[key] = true
+        }
+      } else if (result.value.hasMore) {
+        hasMore = true
+      } else {
+        nextDone[key] = true
+      }
     } else {
-      errors.push(toSourceError(eligible[index], result.reason))
+      errors.push(toSourceError(source, result.reason))
+      // A failure is not exhaustion: keep the source alive to retry on the next
+      // page by carrying its cursor forward (offset sources retry via page + 1).
+      // It resumes only if another source keeps the feed advancing.
+      if (isCursor && cursors[key] !== undefined) {
+        nextCursors[key] = cursors[key]
+      }
     }
   })
 
@@ -131,6 +218,8 @@ export async function fetchAggregated(
     articles: dedupeArticles(articles).sort(byNewestFirst),
     errors,
     hasMore,
+    nextCursors,
+    nextDone,
   }
 }
 
@@ -144,14 +233,16 @@ export async function fetchAcrossCategories(
   categories: readonly Category[],
   sources: NewsSource[],
   signal?: AbortSignal,
+  cursors: Record<string, string> = {},
+  done: Record<string, true> = {},
 ): Promise<AggregatedPage> {
   if (categories.length === 0) {
-    return fetchAggregated(query, sources, signal)
+    return fetchAggregated(query, sources, signal, cursors, done)
   }
 
   const pages = await Promise.all(
     categories.map((category) =>
-      fetchAggregated({ ...query, category }, sources, signal),
+      fetchAggregated({ ...query, category }, sources, signal, cursors, done),
     ),
   )
   return mergeAggregatedPages(pages)

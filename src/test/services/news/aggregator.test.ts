@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import type { Article, ArticlePage, ArticleQuery, SourceId } from '@/domain/article'
 import {
   fetchAcrossCategories,
@@ -177,6 +177,145 @@ describe('fetchAggregated', () => {
   })
 })
 
+describe('fetchAggregated cursor pagination', () => {
+  function cursorSource(
+    id: SourceId,
+    fetchArticles: NewsSource['fetchArticles'],
+  ): NewsSource {
+    return {
+      id,
+      name: `${id} source`,
+      capabilities: {
+        categories: ['general', 'technology'],
+        dateFilter: false,
+        dateFilterWithCategory: false,
+        pagination: 'cursor',
+      },
+      isConfigured: () => true,
+      fetchArticles,
+    }
+  }
+
+  it('collects a cursor source’s nextCursor and reports hasMore', async () => {
+    const source = cursorSource('newsdata', () =>
+      Promise.resolve({
+        articles: [makeArticle({ id: 'c1' })],
+        totalResults: 1,
+        hasMore: true,
+        nextCursor: 'TOKEN2',
+      }),
+    )
+
+    const result = await fetchAggregated(QUERY, [source])
+
+    expect(result.hasMore).toBe(true)
+    expect(result.nextCursors).toEqual({ '::newsdata': 'TOKEN2' })
+  })
+
+  it('queries a cursor source on the first page with no token', async () => {
+    let receivedCursor: string | undefined = 'unset'
+    const source = cursorSource('newsdata', (query) => {
+      receivedCursor = query.cursor
+      return Promise.resolve({ articles: [], totalResults: 0, hasMore: false })
+    })
+
+    await fetchAggregated(QUERY, [source], undefined, {})
+
+    expect(receivedCursor).toBeUndefined()
+  })
+
+  it('passes the stored token to the source on the next page', async () => {
+    let receivedCursor: string | undefined
+    const source = cursorSource('newsdata', (query) => {
+      receivedCursor = query.cursor
+      return Promise.resolve({ articles: [], totalResults: 0, hasMore: false })
+    })
+
+    await fetchAggregated({ ...QUERY, page: 2 }, [source], undefined, {
+      '::newsdata': 'TOKEN2',
+    })
+
+    expect(receivedCursor).toBe('TOKEN2')
+  })
+
+  it('marks a cursor source done once it stops returning a token', async () => {
+    const source = cursorSource('newsdata', () =>
+      Promise.resolve({
+        articles: [makeArticle({ id: 'last' })],
+        totalResults: 1,
+        hasMore: false,
+      }),
+    )
+
+    const result = await fetchAggregated(QUERY, [source])
+
+    expect(result.hasMore).toBe(false)
+    expect(result.nextDone).toEqual({ '::newsdata': true })
+  })
+
+  it('does not re-query a source already marked done, avoiding duplicates', async () => {
+    const fetchArticles = vi.fn(() =>
+      Promise.resolve({
+        articles: [makeArticle({ id: 'dup' })],
+        totalResults: 1,
+        hasMore: false,
+      }),
+    )
+    const source = cursorSource('newsdata', fetchArticles)
+
+    const result = await fetchAggregated(
+      { ...QUERY, page: 2 },
+      [source],
+      undefined,
+      {},
+      {
+        '::newsdata': true,
+      },
+    )
+
+    expect(fetchArticles).not.toHaveBeenCalled()
+    expect(result.articles).toEqual([])
+  })
+
+  it('marks an exhausted offset source done so it is not refetched', async () => {
+    const source = makeSource('newsapi', page([makeArticle({ id: 'end' })], false))
+
+    const result = await fetchAggregated(QUERY, [source])
+
+    expect(result.nextDone).toEqual({ '::newsapi': true })
+  })
+
+  it('retries a failed cursor source next page by carrying its token forward', async () => {
+    const source = cursorSource('newsdata', () => Promise.reject(new Error('429')))
+
+    const result = await fetchAggregated({ ...QUERY, page: 2 }, [source], undefined, {
+      '::newsdata': 'TOKEN2',
+    })
+
+    // The token is preserved (retry next page) and the cell is NOT marked done.
+    expect(result.nextCursors).toEqual({ '::newsdata': 'TOKEN2' })
+    expect(result.nextDone['::newsdata']).toBeUndefined()
+    expect(result.errors).toHaveLength(1)
+  })
+
+  it('does not keep the feed alive on a cursor source that returns no token', async () => {
+    // hasMore:true but no nextCursor is contradictory; without a token the
+    // source cannot continue, so it is finished rather than looping page one.
+    const source = cursorSource('newsdata', () =>
+      Promise.resolve({
+        articles: [makeArticle({ id: 'x' })],
+        totalResults: 1,
+        hasMore: true,
+      }),
+    )
+
+    const result = await fetchAggregated(QUERY, [source])
+
+    expect(result.hasMore).toBe(false)
+    expect(result.nextDone).toEqual({ '::newsdata': true })
+  })
+})
+
 describe('mergeAggregatedPages', () => {
   it('merges pages deduped, newest first, with errors reported once', () => {
     const shared = makeArticle({ id: 'shared', publishedAt: '2026-07-05T00:00:00Z' })
@@ -188,8 +327,20 @@ describe('mergeAggregatedPages', () => {
     }
 
     const merged = mergeAggregatedPages([
-      { articles: [shared], errors: [error], hasMore: false },
-      { articles: [older, { ...shared }], errors: [error], hasMore: true },
+      {
+        articles: [shared],
+        errors: [error],
+        hasMore: false,
+        nextCursors: {},
+        nextDone: {},
+      },
+      {
+        articles: [older, { ...shared }],
+        errors: [error],
+        hasMore: true,
+        nextCursors: {},
+        nextDone: {},
+      },
     ])
 
     expect(merged.articles.map((a) => a.id)).toEqual(['shared', 'older'])
@@ -197,11 +348,38 @@ describe('mergeAggregatedPages', () => {
     expect(merged.hasMore).toBe(true)
   })
 
+  it('unions the per-cell continuation tokens across categories', () => {
+    const merged = mergeAggregatedPages([
+      {
+        articles: [],
+        errors: [],
+        hasMore: true,
+        nextCursors: { 'technology::newsdata': 'T1' },
+        nextDone: {},
+      },
+      {
+        articles: [],
+        errors: [],
+        hasMore: true,
+        nextCursors: { 'science::newsdata': 'S1' },
+        nextDone: { 'science::guardian': true },
+      },
+    ])
+
+    expect(merged.nextCursors).toEqual({
+      'technology::newsdata': 'T1',
+      'science::newsdata': 'S1',
+    })
+    expect(merged.nextDone).toEqual({ 'science::guardian': true })
+  })
+
   it('returns an empty page for no input', () => {
     expect(mergeAggregatedPages([])).toEqual({
       articles: [],
       errors: [],
       hasMore: false,
+      nextCursors: {},
+      nextDone: {},
     })
   })
 })
