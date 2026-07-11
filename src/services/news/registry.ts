@@ -23,7 +23,7 @@ export const ALL_SOURCES: NewsSource[] = [
   new NewsApiSource(readKey(import.meta.env.VITE_NEWSAPI_API_KEY)),
   new GuardianSource(readKey(import.meta.env.VITE_GUARDIAN_API_KEY)),
   new NytimesSource(readKey(import.meta.env.VITE_NYT_API_KEY)),
-  new NewsdataSource(readKey(import.meta.env.VITE_PUB_NEWSDATA_API_KEY)),
+  new NewsdataSource(readKey(import.meta.env.VITE_NEWSDATA_API_KEY)),
 ]
 
 /** Sources matching a selection; an empty selection means all of them. */

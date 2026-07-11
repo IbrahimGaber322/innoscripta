@@ -194,7 +194,7 @@ cp .env.example .env
 VITE_NEWSAPI_API_KEY=your_key
 VITE_GUARDIAN_API_KEY=your_key
 VITE_NYT_API_KEY=your_key
-VITE_PUB_NEWSDATA_API_KEY=your_key
+VITE_NEWSDATA_API_KEY=your_key
 ```
 
 ### 3. Run locally
@@ -219,7 +219,7 @@ docker build -t news-aggregator \
   --build-arg VITE_NEWSAPI_API_KEY=your_key \
   --build-arg VITE_GUARDIAN_API_KEY=your_key \
   --build-arg VITE_NYT_API_KEY=your_key \
-  --build-arg VITE_PUB_NEWSDATA_API_KEY=your_key .
+  --build-arg VITE_NEWSDATA_API_KEY=your_key .
 
 docker run --rm -p 8080:80 news-aggregator
 ```
