@@ -55,7 +55,13 @@ if (!id || !name) {
 
 id = (id || '').toLowerCase()
 name = (name || '').trim()
-token = (token || id.toUpperCase()).toUpperCase()
+// Normalise the token to just the distinctive part: the env var is always
+// VITE_<TOKEN>_API_KEY, so strip a stray VITE_ prefix or _API_KEY suffix a
+// user may include (e.g. "PUB_NEWSDATA_API_KEY" -> "PUB_NEWSDATA").
+token = (token || id.toUpperCase())
+  .toUpperCase()
+  .replace(/^VITE_/, '')
+  .replace(/_API_KEY$/, '')
 url = (url || '').trim()
 
 if (!/^[a-z][a-z0-9]*$/.test(id)) {
@@ -269,7 +275,10 @@ export function build%PASCAL%RequestUrl(query: ArticleQuery): string {
 export class %CLASS% extends HttpNewsSource<%PASCAL%Response> {
   readonly id = '%ID%'
   readonly name = '%NAME%'
-  // TODO: declare what this source can actually filter on.
+  // TODO: declare what this source can actually filter on. If the provider
+  // paginates by an opaque token instead of a page number (e.g. Newsdata),
+  // add \`pagination: 'cursor'\` here, read \`query.cursor\` in buildRequest, and
+  // return \`nextCursor\` from parseResponse (see the newsdata adapter).
   readonly capabilities: SourceCapabilities = {
     categories: CATEGORIES,
     dateFilter: false,
@@ -288,6 +297,8 @@ export class %CLASS% extends HttpNewsSource<%PASCAL%Response> {
     return {
       articles: data.articles.map((raw) => map%PASCAL%Article(raw, query.category)),
       totalResults: data.total ?? data.articles.length,
+      // Offset pagination: more pages while we haven't reached the total. For a
+      // cursor source, use \`hasMore: Boolean(data.nextPage)\` + \`nextCursor\`.
       hasMore: query.page * query.pageSize < (data.total ?? 0),
     }
   }
