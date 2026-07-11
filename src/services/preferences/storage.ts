@@ -3,7 +3,7 @@ import { DEFAULT_PREFERENCES, type Preferences } from '../../domain/preferences'
 import { isKnownSourceId } from '../news/registry'
 
 /** Versioned so a future shape change can migrate or discard old data. */
-export const PREFERENCES_STORAGE_KEY = 'news-aggregator:prefs:v1'
+export const PREFERENCES_STORAGE_KEY = 'newshub:prefs:v1'
 
 /**
  * Loads preferences, tolerating missing, corrupted, or tampered storage:
