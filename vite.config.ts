@@ -16,5 +16,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
     css: false,
+    // Unit/component tests live under src/; the e2e/ Playwright specs run
+    // separately via `npm run test:e2e`, so keep Vitest out of them.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 })

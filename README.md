@@ -150,17 +150,17 @@ language.
 
 ## Tech stack
 
-| Layer                | Choice                                                      |
-| -------------------- | ----------------------------------------------------------- |
-| UI                   | React 19, React Router v7                                   |
-| Language             | TypeScript (strict)                                         |
-| Build tool           | Vite 8                                                      |
-| Styling              | Tailwind CSS v4 (`@theme` tokens, no PostCSS)               |
-| Server state         | TanStack Query v5 (infinite queries, caching, cancellation) |
-| Sanitization         | DOMPurify (Guardian article bodies)                         |
-| Testing              | Vitest + React Testing Library (134 tests)                  |
-| Linting / formatting | oxlint + Prettier                                           |
-| Runtime image        | nginx (Alpine), served from a multi-stage Docker build      |
+| Layer                | Choice                                                       |
+| -------------------- | ------------------------------------------------------------ |
+| UI                   | React 19, React Router v7                                    |
+| Language             | TypeScript (strict)                                          |
+| Build tool           | Vite 8                                                       |
+| Styling              | Tailwind CSS v4 (`@theme` tokens, no PostCSS)                |
+| Server state         | TanStack Query v5 (infinite queries, caching, cancellation)  |
+| Sanitization         | DOMPurify (Guardian article bodies)                          |
+| Testing              | Vitest + React Testing Library (134); Playwright (e2e smoke) |
+| Linting / formatting | oxlint + Prettier                                            |
+| Runtime image        | nginx (Alpine), served from a multi-stage Docker build       |
 
 ---
 
@@ -237,6 +237,7 @@ Docker `HEALTHCHECK`.
 npm run dev            # start the Vite dev server
 npm run build          # type-check (tsc) + production build
 npm run test           # unit tests (Vitest + React Testing Library)
+npm run test:e2e       # Playwright end-to-end smoke test (see "Testing")
 npm run lint           # oxlint
 npm run format         # Prettier (write); format:check to verify
 npm run preview        # preview the production build locally
@@ -554,6 +555,13 @@ logic:
 - **URL filter state** (parsing, validation, round-trip serialization) and
   followed-author matching,
 - **key components** (article card rendering, app routing).
+
+A single **Playwright** end-to-end smoke test (`npm run test:e2e`) covers the
+critical path in a real browser: the front page loads and renders an aggregated
+article, opening it shows the in-app reader, and the main sections plus keyword
+search all work. It intercepts the provider APIs with a fixture, so it is
+deterministic and needs no real keys or network — run
+`npx playwright install chromium` once first.
 
 ## Known limitations
 
