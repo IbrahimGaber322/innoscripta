@@ -108,4 +108,26 @@ describe('ForYouPage source preferences', () => {
     expect(await screen.findByText('Article from Guardian')).toBeInTheDocument()
     expect(await screen.findByText('Article from NewsAPI')).toBeInTheDocument()
   })
+
+  it('pins articles by a followed author above the rest', async () => {
+    localStorage.setItem(
+      PREFERENCES_STORAGE_KEY,
+      JSON.stringify({ sources: ['guardian'], categories: [], authors: ['Alex Hern'] }),
+    )
+    guardianFetch.mockResolvedValueOnce({
+      articles: [
+        { ...fakeArticle('g1', 'guardian', 'Alex Hern on AI'), author: 'Alex Hern' },
+        { ...fakeArticle('g2', 'guardian', 'Alex Hern on privacy'), author: 'Alex Hern' },
+      ],
+      totalResults: 2,
+      hasMore: false,
+    })
+
+    renderForYou()
+
+    // Two followed articles: one becomes the top pick, the other fills the
+    // "From authors you follow" rail — proving the followed/rest partition.
+    expect(await screen.findByText('From authors you follow')).toBeInTheDocument()
+    expect(screen.getByText('Alex Hern on privacy')).toBeInTheDocument()
+  })
 })
